@@ -1,0 +1,70 @@
+@use '../../styles/global.scss';
+
+.header-notification {
+  position: relative;
+}
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #e53935;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+  font-weight: bold;
+}
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2vw;
+  background: #fff;
+  min-height: 64px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.header-menu {
+  display: flex;
+  gap: 24px;
+}
+
+.header-menu-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #0a2885;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.header-menu-btn.active,
+.header-menu-btn:hover {
+  background: #e3e8fa;
+  color: #1976d2;
+}
+
+@media (max-width: 900px) {
+  .header-menu {
+    gap: 12px;
+  }
+  .header-menu-btn {
+    font-size: 0.95rem;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-menu {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .header-menu-btn {
+    font-size: 0.9rem;
+    padding: 4px 6px;
+  }
+}

@@ -1,0 +1,172 @@
+@use '../../styles/global.scss';
+
+.chat-fab {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  background: #1976d2;
+  border: none;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  box-shadow: 0 2px 16px 0 rgba(25, 118, 210, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  cursor: pointer;
+  transition: background 0.2s;
+  outline: none;
+  &:hover {
+    background: #1251a3;
+  }
+}
+
+.chat-fab-alert {
+  animation: pulse 1s infinite alternate;
+  background: #1976d2 !important;
+}
+
+@keyframes pulse {
+  from { box-shadow: 0 0 0 0 #1976d2; }
+  to   { box-shadow: 0 0 32px 16px #1976d2; }
+}
+
+.chat-popup {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 380px;
+  max-width: 95vw;
+  height: 440px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px 0 rgba(25, 118, 210, 0.18);
+  display: flex;
+  flex-direction: column;
+  z-index: 1300;
+  overflow: hidden;
+}
+
+.chat-header {
+  background: #1976d2;
+  color: #fff;
+  font-weight: 700;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.15rem;
+}
+
+.chat-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 1.2rem 1rem 0.5rem 1rem;
+  overflow-y: auto;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-bubble {
+  display: inline-block;
+  padding: 0.7rem 1.1rem;
+  margin-bottom: 0.7rem;
+  border-radius: 16px;
+  font-size: 1rem;
+  max-width: 80%;
+  box-shadow: 0 2px 6px 0 rgba(0,0,0,0.07);
+  word-break: break-word;
+}
+
+.chat-bubble.received {
+  background: #fff;
+  color: #222;
+  align-self: flex-start;
+}
+
+.chat-bubble.sent {
+  background: #e3f2fd;
+  color: #1976d2;
+  align-self: flex-end;
+  font-weight: 600;
+}
+
+.chat-input {
+  display: flex;
+  padding: 1rem;
+  background: #fafafa;
+  border-top: 1px solid #eee;
+}
+
+.chat-input input {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  outline: none;
+  margin-right: 0.7rem;
+  background: #fff;
+}
+
+.chat-send {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 1.2rem;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover:enabled {
+    background: #1251a3;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+.chat-input button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+/* Adicione isso ao seu arquivo ChatWidget.scss */
+.end-chat-button {
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  font-weight: bold;
+  &:hover {
+    background: #b71c1c;
+  }
+}
+
+.chat-bubble.system {
+  background: #e0e0e0;
+  color: #555;
+  font-style: italic;
+  font-size: 0.9em;
+  text-align: center;
+  align-self: center;
+}

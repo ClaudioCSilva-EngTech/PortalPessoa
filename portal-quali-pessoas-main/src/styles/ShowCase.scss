@@ -1,0 +1,133 @@
+/* ShowCase.scss */
+
+@import 'global'; // Assuming global variables are defined here
+
+.example-component {
+  // Styles for the main container if needed, otherwise this can be removed.
+}
+
+.recruitment-main-content {
+  flex: 1;
+  background: var(--bg-light); // Using global variable
+  padding: 0;
+}
+
+.benefits-section {
+  padding: 30px 20px;
+  text-align: center;
+  background-color: var(--bg-light); // Using global variable
+}
+
+.benefits-section h2 {
+  font-family: var(--font-heading); // Using global variable
+  font-size: 2.8em;
+  margin-bottom: 60px;
+  padding: 50px 0 0px 0;
+  color: var(--primary-color); // Using global variable
+}
+
+.benefits-section h3 {
+  font-family: var(--font-heading); // Using global variable
+  font-size: 1.3em;
+  text-align: start;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--primary-color); // Using global variable
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.benefit-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  height: 100%;
+  transition: transform 0.3s ease; // Added transition for hover effect
+}
+
+.benefit-item:hover {
+  transform: translateY(-10px);
+}
+
+.benefit-item h3 {
+  font-family: var(--font-heading); // Using global variable
+  font-size: 1.8em;
+  margin-top: 20px;
+  color: var(--primary-color); // Using global variable
+}
+
+.benefit-item p {
+  margin: 4px 0 30px 0;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cta-button {
+  margin-top: auto;
+  padding: 10px 20px;
+  background-color: var(--accent-color); // Using global variable
+  color: var(--primary-color); // Using global variable (assuming primary color is white for text on accent background)
+  border: none;
+  border-radius: 50px;
+  font-size: 1.2em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.cta-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Specific icon colors - these can remain inline or be managed here if more icons are added */
+.fa-sync-alt {
+  color: #FFD700;
+}
+
+.fa-plane-departure {
+  color: #00CED1;
+}
+
+.fa-tshirt {
+  color: #9370DB;
+}
+
+.fa-hand-holding-heart {
+  color: #9370DB;
+}
+
+.fa-file-invoice-dollar {
+  color: #9370DB;
+}
+
+.fa-comments {
+  color: #9370DB;
+}
+
+.fa-slideshare {
+  color: #9370DB;
+}
+
+// Media queries from Recruitment.css
+@media (max-width: 900px) {
+  .recruitment-main-content {
+    padding: 0;
+  }
+}

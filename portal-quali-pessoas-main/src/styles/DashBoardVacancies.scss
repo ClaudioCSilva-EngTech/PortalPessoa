@@ -1,0 +1,272 @@
+@use 'global.scss';
+
+// Fundo do dashboard
+.dashboard-vacancies-bg {
+  background: var(--bg-light);
+  min-height: 100vh;
+  padding: 0;
+}
+
+// Container principal do quadro Kanban
+.dashboard-main-container {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(10, 40, 133, 0.07);
+  border: 1px solid var(--color-border, #e0e0e0);
+  padding: 0;
+  margin: 0;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+}
+
+// Container do Kanban para scroll horizontal
+.dashboard-kanban-container {
+  max-width: 100vw;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+// Header do dashboard
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 24px 24px 0 24px;
+  font-family: var(--font-body) !important;
+  color: var(--text-color) !important;
+
+  @media (min-width: 600px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.dashboard-title {
+  font-size: 1.5em;
+  font-weight: 700;
+  min-width: 180px;
+  font-family: var(--font-body) !important;
+  color: var(--text-color) !important;
+}
+
+// Botão de abrir vaga
+.dashboard-btn-abrir-vaga {
+  border-radius: 32px !important;
+  font-weight: 700 !important;
+  min-width: 180px;
+  background: var(--accent-color) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(10, 40, 133, 0.07);
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--primary-color) !important;
+  }
+}
+
+// Scroll horizontal do Kanban
+.dashboard-kanban-scroll {
+  //overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+// Linha do Kanban (colunas lado a lado)
+.dashboard-kanban-row {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 1800px;
+  gap: 24px;
+  margin: 0;
+}
+
+// Coluna do Kanban
+.dashboard-kanban-col {
+  min-width: 480px;
+  flex: 1 1 0;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(10, 40, 133, 0.07);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  margin: 0;
+}
+
+// Título da coluna
+.dashboard-kanban-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--primary-color);
+}
+
+// Linha divisória da coluna
+.dashboard-kanban-divider {
+  margin-bottom: 8px;
+}
+
+// Card de vaga
+.vacancy-card {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(10, 40, 133, 0.07);
+  cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  transition: border-color 0.2s;
+  border: 2px solid var(--color-border);
+  font-size: 0.97em;
+
+  &.aprovada { border-color: var(--color-success); }
+  &.recusada { border-color: var(--color-danger); }
+  &.pendente-de-aprovação { border-color: var(--accent-color); }
+  &.rascunho { border-color: var(--color-grey); }
+  &.em-seleção, &.em-contratação { border-color: var(--color-accent); }
+  &.finalizada { border-color: var(--color-grey); }
+}
+
+// Avatar do card
+.vacancy-avatar {
+  background: var(--color-accent) !important;
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 1.1em;
+}
+
+// Título do card
+.vacancy-title {
+  font-weight: 700 !important;
+  font-size: 1em !important;
+}
+
+// Setor, motivo e data do card
+.vacancy-setor,
+.vacancy-motivo,
+.vacancy-data {
+  font-size: 0.95em !important;
+}
+
+.vacancy-motivo {
+  margin-top: 8px !important;
+  min-height: 24px;
+  color: var(--color-text);
+}
+
+.vacancy-data {
+  font-size: 0.85em;
+  color: var(--color-grey);
+}
+
+// Status do card
+.vacancy-status {
+  border: 1px solid var(--color-border) !important;
+  background: #fff !important;
+  font-weight: 600 !important;
+  margin-left: 8px !important;
+
+  &.aprovada { border-color: var(--color-success); color: var(--color-success) !important; }
+  &.recusada { border-color: var(--color-danger); color: var(--color-danger) !important; }
+  &.pendente-de-aprovação { border-color: var(--accent-color); color: var(--accent-color) !important; }
+  &.rascunho { border-color: var(--color-grey); color: var(--color-grey) !important; }
+  &.em-seleção, &.em-contratação { border-color: var(--color-accent); color: var(--color-accent) !important; }
+  &.finalizada { border-color: var(--color-grey); color: var(--color-grey) !important; }
+}
+
+// Texto de coluna vazia
+.dashboard-kanban-empty {
+  opacity: 0.7;
+  margin-bottom: 16px;
+  color: var(--color-grey);
+}
+
+// Modal de detalhes da vaga
+.vacancy-detail-modal .MuiPaper-root {
+  border-radius: 24px !important;
+  padding: 0 !important;
+}
+
+.vacancy-detail-modal .MuiDialogTitle-root {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0 !important;
+}
+
+.vacancy-detail-modal .MuiDialogContent-root {
+  padding-top: 0 !important;
+}
+
+.vacancy-detail-label {
+  color: var(--color-grey);
+  font-size: 0.95em;
+}
+
+.vacancy-detail-value {
+  font-weight: 600;
+}
+
+// Responsividade
+@media (max-width: 1200px) {
+  .dashboard-kanban-row {
+    min-width: 1200px;
+    gap: 16px;
+  }
+  .dashboard-kanban-col {
+    min-width: 340px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-main-container {
+    padding: 0;
+  }
+  .dashboard-header {
+    padding: 12px 8px 0 8px;
+  }
+  .dashboard-kanban-row {
+    min-width: 900px;
+    gap: 8px;
+  }
+  .dashboard-kanban-col {
+    min-width: 220px;
+    padding: 6px;
+  }
+  .vacancy-card {
+    padding: 6px 8px;
+    font-size: 0.93em;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-main-container {
+    padding: 0;
+  }
+  .dashboard-header {
+    padding: 8px 2px 0 2px;
+    flex-direction: column;
+    gap: 8px;
+    font-family: var(--font-body) !important;
+    color: var(--text-color) !important;
+  }
+  .dashboard-title {
+    font-size: 1.1em;
+  }
+  .dashboard-kanban-row {
+    min-width: 320px;
+  }
+  .dashboard-kanban-col {
+    min-width: 120px;
+    padding: 2px;
+  }
+  .vacancy-card {
+    padding: 4px 4px;
+    font-size: 0.9em;
+  }
+}

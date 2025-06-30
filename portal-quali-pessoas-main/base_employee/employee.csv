@@ -1,0 +1,9 @@
+idColaborador,nome,setor,gestorDireto,cargo,dataAdmissao,dataDesligamento,dataUltimoRecesso,recessoAberto,tipoContrato,empresa
+3240,Wanderson Balmeiro Santos,TI,Ana Souza,Eng. Software,01 Jun 2020,,01 Jun 2025,FALSE,CLT,QualiBanking
+3241,João Silva,Marketing,Maria Oliveira,Analista de Marketing,15 Mar 2021,,15 Mar 2024,TRUE,PJ,GrupoQuali
+3242,Carolina Fernandes,RH,Pedro Mendes,Coordenadora de RH,10 Jan 2019,,10 Jan 2024,FALSE,CLT,QualiConsig
+3243,Fernando Souza,Comercial,Mariana Costa,Vendedor,01 Fev 2022,,01 Fev 2025,FALSE,CLT,QualiBanking
+3244,Beatriz Lima,TI,Ana Souza,DevOps Engineer,20 Ago 2020,,20 Ago 2024,TRUE,PJ,GrupoQuali
+3245,Ricardo Pereira,Financeiro,André Santos,Analista Financeiro,05 Abr 2023,,05 Abr 2025,FALSE,CLT,QualiConsig
+3246,Patrícia Gomes,Marketing,Maria Oliveira,Gerente de Mídias Sociais,12 Set 2018,,12 Set 2024,FALSE,CLT,QualiBanking
+3247,Gustavo Almeida,TI,Ana Souza,Analista de Suporte,03 Nov 2022,,03 Nov 2024,TRUE,PJ,GrupoQuali

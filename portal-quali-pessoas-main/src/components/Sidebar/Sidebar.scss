@@ -1,0 +1,232 @@
+.app-sidebar {
+  position: fixed;
+  top: 60px; /* altura do header */
+  left: 0;
+  height: calc(100vh - 100px); /* header + footer */
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  transition: width 0.2s;
+  z-index: 20;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-top: 1rem;
+}
+
+.app-sidebar.closed {
+  width: 56px;
+  min-width: 56px;
+  /* NÃO use display: none ou width: 0 */
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.app-sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app-sidebar nav li {
+  margin-bottom: 1rem;
+}
+
+.app-sidebar nav button {
+  background: none;
+  border: none;
+  color: #222;
+  font-size: 1rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.app-sidebar nav button.active,
+.app-sidebar nav button:hover {
+  background: #e3e7fa;
+  color: #0a2885;
+}
+
+.job-search-sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  height: calc(100vh - 60px);
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  z-index: 10;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: width 0.2s;
+  width: 240px;
+  min-width: 240px;
+
+  &.closed {
+    width: 64px;
+    min-width: 64px;
+    .sidebar-title,
+    .sidebar-label,
+    .sidebar-section,
+    .sidebar-divider,
+    .filter-group {
+      display: none !important;
+    }
+    .job-search-sidebar-icons {
+      display: flex !important;
+    }
+  }
+
+  &.open {
+    width: 240px;
+    min-width: 240px;
+    .job-search-sidebar-icons {
+      display: none !important;
+    }
+  }
+}
+
+.job-search-sidebar-toggle {
+  margin: 0;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fff;
+  border: 2px solid #0a2885;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px #0001;
+}
+
+.job-search-sidebar-scroll {
+  width: 100%;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sidebar-section {
+  padding: 0 16px;
+}
+
+.sidebar-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin: 16px 0 12px 0;
+}
+
+.filter-group {
+  margin-bottom: 16px;
+  label {
+    font-size: 1rem;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .filter-select {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-top: 4px;
+  }
+}
+
+.sidebar-divider {
+  margin: 24px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-list-item {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  cursor: pointer;
+  color: #142c6a;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  padding: 6px 8px;
+  transition: background 0.2s, color 0.2s;
+  &:hover,
+  &.active {
+    background: #e3e7fa;
+    color: #0a2885;
+    font-weight: bold;
+  }
+  .sidebar-icon {
+    margin-right: 12px;
+    font-size: 32px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidebar-label {
+    font-size: 1.1rem;
+  }
+}
+
+.job-search-sidebar-icons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.sidebar-icon-only {
+  margin-bottom: 8px;
+  cursor: pointer;
+  color: #142c6a;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s, border-bottom 0.2s;
+  &.active {
+    color: #0a2885;
+    border-bottom: 3px solid #0a2885;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-sidebar {
+    top: 48px;
+    height: calc(100vh - 96px);
+    width: 160px;
+  }
+  .app-sidebar.closed {
+    width: 56px;
+    min-width: 56px;
+    overflow: hidden;
+  }
+}

@@ -1,0 +1,273 @@
+/* Variáveis Globais */
+:root {
+  --primary-color: #2d0ea0; /* Roxo vibrante */
+  --secondary-color: #00d2ff; /* Azul claro */
+  --accent-color: #ffc107; /* Amarelo para destaque */
+  --text-color: #333;
+  --bg-light: #f8f8f8;
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Open Sans', sans-serif;
+
+  --color-primary: #0a2885;
+  /* de global.scss */
+  --color-secondary: #f5f6fa;
+  /* de global.scss */
+  --color-accent: #1976d2;
+  /* de global.scss */
+  --color-bg: #f8f9fa;
+  /* de global.scss */
+  --color-text: #222;
+  /* de global.scss */
+  --color-footer: #e9ecef;
+  /* de global.scss */
+  --color-header: #fff;
+  /* de global.scss */
+  --color-border: #e0e0e0;
+  /* de global.scss */
+  --color-grey: #888;
+  --color-danger: #d32f2f;
+  --color-success: #388e3c;
+
+}
+
+/* Reset Global */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-color);
+  background-color: #f8f8f8;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Layout Principal */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.app-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header-icon {
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.header-icon:hover {
+  color: var(--primary-color);
+}
+
+/* Tooltip de Sign-in */
+.signin-tooltip {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 250px;
+}
+
+.signin-field {
+  margin-bottom: 15px;
+}
+
+.signin-field label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: var(--text-color);
+}
+
+.signin-field input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.signin-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signin-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.signin-button:hover {
+  background-color: #0056b3;
+}
+
+.signin-recover {
+  font-size: 12px;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.signin-recover:hover {
+  text-decoration: underline;
+}
+
+.app-sidebar.closed {
+  width: 56px;
+  min-width: 56px;
+  /* NÃO use display: none ou width: 0 */
+}
+
+/* Main Content */
+.app-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-light);
+  margin-left: var(--sidebar-width, 0px);
+  transition: margin-left 0.2s;
+}
+
+/* Footer */
+.app-footer {
+  flex-shrink: 0;
+  background: var(--primary-color);
+  border-top: 1px solid #eee;
+  text-align: center;
+  color: var(--bg-light);
+  padding: 10px 0;
+  width: 100%;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+.footer-social {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.footer-icon {
+  font-size: 20px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.footer-icon:hover {
+  color: var(--accent-color);
+}
+
+/* Links da Home */
+.home-link {
+  text-decoration: none; /* Remove o sublinhado */
+  color: inherit; /* Herda a cor do título */
+}
+
+.home-link:hover {
+  text-decoration: underline; /* Adiciona sublinhado ao passar o mouse */
+}
+
+/* Conteúdo Dinâmico do Header */
+.header-dynamic-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.recruitment-menu {
+  display: flex;
+  gap: 15px;
+}
+
+.recruitment-menu-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.recruitment-menu-item.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.recruitment-menu-item:hover {
+  background-color: #e0e0e0;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 20px;
+  }
+
+  .header-icon {
+    font-size: 18px;
+  }
+
+  .signin-tooltip {
+    width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 18px;
+  }
+
+  .header-icon {
+    font-size: 16px;
+  }
+}

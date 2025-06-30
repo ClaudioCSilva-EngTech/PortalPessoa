@@ -1,0 +1,5 @@
+# .gitignore
+# ... outros arquivos e pastas
+.env
+.env.*
+node_modules/

@@ -1,0 +1,44 @@
+
+.people-department-container {
+  padding: 24px;
+  background: #f9f9f9;
+  min-height: 100vh;
+}
+
+.people-department-table {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0001;
+  padding: 16px;
+}
+
+.people-department-header {
+  color: #1976d2;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.form-request-ap-container {
+  padding: 24px;
+  margin: 24px auto;
+  max-width: 900px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0001;
+}
+@media (max-width: 900px) {
+  .form-request-ap-container {
+    padding: 8px;
+    margin: 8px;
+  }
+}
+
+@media (max-width: 900px) {
+  .people-department-container {
+    padding: 8px;
+  }
+  .people-department-table {
+    padding: 4px;
+  }
+}
+
