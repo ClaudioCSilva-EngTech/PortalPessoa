@@ -11,7 +11,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:staging": "vite build --mode homologation"
+    "build:staging": "vite build --mode homologation",
+    "build:development": "tsc -b && vite build --mode development"
   },
   "author": "Claudio.Silva",
   "license": "ISC",
@@ -23,6 +24,8 @@
     "@mui/icons-material": "^7.1.1",
     "@mui/material": "^7.1.0",
     "dayjs": "^1.11.13",
+    "dotenv": "^17.0.0",
+    "express": "^5.1.0",
     "formik": "^2.4.6",
     "icons-material": "^0.0.1-security",
     "jspdf": "^3.0.1",

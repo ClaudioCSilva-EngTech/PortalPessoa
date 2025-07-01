@@ -17,7 +17,7 @@ function getAuthHeaders() {
 class ApiServiceVaga {
   // Cadastrar vaga
   static async cadastrarVaga(vaga: Vaga): Promise<VagaResponse> {
-    const response = await fetch(`${API_BASE}vagas`, {
+    const response = await fetch(`${API_BASE}/vagas`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(vaga),
@@ -27,7 +27,7 @@ class ApiServiceVaga {
 
   // Consultar vagas (todas ou por filtro)
   static async consultarVagas(filtros?: { [key: string]: string | number | boolean }): Promise<VagaResponse> {
-    let url = `${API_BASE}vagas`;
+    let url = `${API_BASE}/vagas`;
 
     if (filtros) {
       const params = new URLSearchParams();
@@ -55,7 +55,7 @@ class ApiServiceVaga {
 
   // Consultar aprovadores diretos
   static async consultarAprovadores(idUsuario: number): Promise<VagaResponse> {
-    const response = await fetch(`${API_BASE}usuario/aprovadores?idUsuario=${idUsuario}`, {
+    const response = await fetch(`${API_BASE}/usuario/aprovadores?idUsuario=${idUsuario}`, {
       method: "GET",
       //headers: getAuthHeaders(),
     });
@@ -64,7 +64,7 @@ class ApiServiceVaga {
 
   // Consultar aprovadores RH
   static async consultarAprovadoresRH(delegado: boolean): Promise<VagaResponse> {
-    const response = await fetch(`${API_BASE}usuario/aprovadores/rh?delegado=${delegado}`, {
+    const response = await fetch(`${API_BASE}/usuario/aprovadores/rh?delegado=${delegado}`, {
       method: "GET",
       //headers: getAuthHeaders(),
     });
@@ -111,7 +111,7 @@ class ApiServiceVaga {
       updatedAtName: userName
     };
 
-    const response = await fetch(`${API_BASE}vagas/${codigo_vaga}/atualizar`, {
+    const response = await fetch(`${API_BASE}/vagas/${codigo_vaga}/atualizar`, {
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify(body),

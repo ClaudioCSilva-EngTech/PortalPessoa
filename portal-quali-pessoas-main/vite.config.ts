@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    port: 5174, // Defina a porta que deseja para o desenvolvimento
+    open: true // Abre o navegador automaticamente
+  },
   build: {
     // Configurações do build do Vite
     rollupOptions: {

@@ -1,0 +1,39 @@
+version: '3.x'
+
+services:
+  # Serviço para a aplicação Node.js
+  nodejs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Mapeia a porta 3000 do container para a porta 3000 do host
+    ports:
+      - "3000:3000"
+    # Mapeia o código-fonte local para o diretório de trabalho do container
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules # Evita que os node_modules do host sobrescrevam os do container
+    # Define o diretório de trabalho dentro do container
+    working_dir: /usr/src/app
+    # Comando para iniciar a aplicação Node.js
+    command: npm start
+    # Garante que o serviço nodejs-app só inicie após o serviço mongodb estar pronto
+    depends_on:
+      - mongodb
+    # Variáveis de ambiente para a aplicação Node.js
+    environment:
+      NODE_ENV: development
+      # Conexão com o MongoDB usando o nome do serviço 'mongodb'
+      MONGO_URI: mongodb://mongodb:27017/mydatabase
+
+  # Serviço para o banco de dados MongoDB
+  mongodb:
+    image: mongo:latest # Imagem oficial do MongoDB
+    ports:
+      - "27017:27017" # Mapeia a porta padrão do MongoDB
+    volumes:
+      - mongodb_data:/data/db_vagas # Persiste os dados do MongoDB em um volume nomeado
+
+# Volumes nomeados para persistir os dados do banco de dados
+volumes:
+  mongodb_data:

@@ -23,6 +23,9 @@ import { styled } from '@mui/system';
 import "../../styles/VacancyManagement.scss";
 import ApiServiceVaga from '../../services/ApiServiceVaga';
 
+const TEXTO_REQUISITOS = import.meta.env.VITE_TEXTO_REQUISITOS_VAGA;
+const TEXTO_BENEFICIOS = import.meta.env.VITE_TEXTO_BENEFICIOS_VAGA;
+
 const FormContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4, 15, 5, 10),
   margin: theme.spacing(2, 4, 2, 0),
@@ -115,6 +118,7 @@ interface VagaData {
   setor: string;
   hierarquia: 'Gerente' | 'Supervisor' | 'Coordenador' | 'Analista' | 'Assistente' | 'Estagiário' | 'Outro';
   motivoSolicitacao: 'Aumento de Quadro' | 'Substituição' | 'Remanejamento' | 'Afastamento' | 'Outro';
+  motivoSubstituicao?: string; // Condicional, se motivoSolicitacao for 'Substituição'
   motivoAfastamento?: string; // Condicional, se motivoSolicitacao for 'Afastamento'
   tipoContratacao: 'Jovem Aprendiz' | 'Estagiário' | 'CLT' | 'PJ';
   horarioTrabalho: string;
@@ -139,6 +143,11 @@ const validationSchema = yup.object({
   setor: yup.string().required('O Setor é obrigatório'),
   hierarquia: yup.string().required('A Hierarquia é obrigatória'),
   motivoSolicitacao: yup.string().required('O Motivo da Solicitação é obrigatório'),
+  motivoSubstituicao: yup.string().when('motivoSolicitacao', {
+    is: 'Substituição',
+    then: (schema) => schema.required('O nome do colaborador substituido é obrigatório'),
+    otherwise: (schema) => schema.optional(),
+  }),
   motivoAfastamento: yup.string().when('motivoSolicitacao', {
     is: 'Afastamento',
     then: (schema) => schema.required('O motivo do afastamento é obrigatório'),
@@ -220,17 +229,18 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
 
   const formik = useFormik<VagaData>({
     initialValues: {
-      posicaoVaga: 'Exp. Promotor de Vendas Jr.',
+      posicaoVaga: '',
       quantidadeVagas: 1,
       setor: currentUser.data.detalhes.setor,
       hierarquia: 'Supervisor',
       motivoSolicitacao: 'Aumento de Quadro',
+      motivoSubstituicao:'',
       motivoAfastamento: '',
       tipoContratacao: 'CLT',
       horarioTrabalho: '',
       salario: 0,
-      requisitosVaga: '',
-      beneficiosVaga: '',
+      requisitosVaga: TEXTO_REQUISITOS || '',
+      beneficiosVaga: TEXTO_BENEFICIOS || '',
       modeloTrabalho: 'Presencial',
       diasTrabalho: diasTrabalhoPadrao, // <-- Dias já marcados
       empresaContratante: '',
@@ -253,7 +263,7 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
         const aprovadoresInicial = Array.isArray(result.data) ? result.data : (result.data ? [result.data] : []);
         aprovadoresAPI = [...aprovadoresInicial];
 
-        // Futuramente incluir aqui a consulta no DB se o gestor direto delegou a aprovação, se sim para 
+        // [Claudio Silva] Futuramente incluir aqui a consulta no DB se o gestor direto delegou a aprovação, se sim para 
         // o time ou para uma pessoa específica
         const resultRh = await ApiServiceVaga.consultarAprovadoresRH(true);
         const aprovadoresRh = Array.isArray(resultRh.data) ? resultRh.data : (resultRh.data ? [resultRh.data] : []);
@@ -268,7 +278,7 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
           _idUsuario: currentUser?.data.auth.id || "",
           solicitante: currentUser?.data.detalhes.nome || "",
           cargo_solicitante: currentUser?.data.detalhes.cargo || "",
-          status_aprovacao: true, // ---->>>>>>> Após definição de workflow de aprovação alterar esse ponto do código
+          status_aprovacao: true, // [Claudio Silva] --> Após definição de workflow de aprovação alterar esse ponto do código 
           fase_workflow: "Aprovada",
           data_abertura: new Date().toISOString(),
           aprovador: aprovadores,
@@ -278,6 +288,7 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
             setor: values.setor,
             hierarquia: values.hierarquia,
             motivoSolicitacao: values.motivoSolicitacao,
+            motivoSubstituicao: values.motivoSubstituicao,
             motivoAfastamento: values.motivoAfastamento || "",
             tipoContratacao: values.tipoContratacao,
             horarioTrabalho: values.horarioTrabalho,
@@ -295,9 +306,8 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
             redesSociaisDivulgacao: values.redesSociaisDivulgacao || []
           }
         };
-        // Aqui você pode chamar o serviço de cadastro de vaga
+    
         const responseCadastroVaga = await ApiServiceVaga.cadastrarVaga(payload);
-
         console.log('Retorno cadastro:', responseCadastroVaga);
         if (responseCadastroVaga.success) {
           alert(`${responseCadastroVaga.message}`);
@@ -315,7 +325,6 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
     console.log('Rascunho Salvo:', formik.values);
     sessionStorage.setItem('draftVacancy', JSON.stringify(formik.values));
     alert('Rascunho da vaga salvo!');
-    // Lógica para salvar rascunho (ex: localStorage, IndexedDB, ou enviar para API com status 'draft')
   };
 
   const handleCancel = () => {
@@ -422,6 +431,38 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
                 )}
               </FormControl>
             </Grid>
+            {formik.values.motivoSolicitacao === 'Substituição' && (
+            <Grid>
+              <MediumTextField
+                fullWidth
+                id="motivoSubstituicao"
+                name="motivoSubstituicao"
+                label="Nome do Colaborador Substituído"
+                value={formik.values.motivoSubstituicao}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.motivoSubstituicao && Boolean(formik.errors.motivoSubstituicao)}
+                helperText={formik.touched.motivoSubstituicao && formik.errors.motivoSubstituicao}
+                variant="outlined"
+              />
+            </Grid>
+          )}
+          {formik.values.motivoSolicitacao === 'Afastamento' && (
+            <Grid>
+              <TextField
+                fullWidth
+                id="motivoAfastamento"
+                name="motivoAfastamento"
+                label="Motivo do Afastamento"
+                value={formik.values.motivoAfastamento}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.motivoAfastamento && Boolean(formik.errors.motivoAfastamento)}
+                helperText={formik.touched.motivoAfastamento && formik.errors.motivoAfastamento}
+                variant="outlined"
+              />
+            </Grid>
+          )}
             <Grid>
               <FormControl fullWidth error={formik.touched.tipoContratacao && Boolean(formik.errors.tipoContratacao)}>
                 <InputLabel id="tipoContratacao-label">Tipo de Contratação</InputLabel>

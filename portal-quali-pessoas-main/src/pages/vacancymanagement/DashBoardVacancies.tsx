@@ -8,22 +8,26 @@ import "../../styles/DashBoardVacancies.scss";
 import FormNewVacancy from "./FormNewVacancy";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 
-// "Rascunho", "Pendente de aprovação", "Recusada"
+// "Rascunho", "Pendente de aprovação", "Recusada", "Aprovada", "Em Contratação"
 const KANBAN_STATUS = [
-    "Aprovada",
+    "Aberta",
     "Em Seleção",
-    "Em Contratação",
-    "Finalizada"
+    "Finalizada",
+    "Congelada",
+    "Cancelada"
 ];
 
 const statusColors = {
     "Aprovada": "#4caf50",
+    "Aberta": "#4caf50",
     "Recusada": "#f44336",
     "Pendente de aprovação": "#ff9800",
     "Rascunho": "#bdbdbd",
     "Em Seleção": "#1976d2",
     "Em Contratação": "#1976d2",
-    "Finalizada": "#757575"
+    "Finalizada": "#757575",
+    "Congelada": "#f44336",
+    "Cancelada": "#f44336"
 };
 
 const getStatus = (vaga: any) => {
@@ -32,6 +36,8 @@ const getStatus = (vaga: any) => {
     if (vaga.status_aprovacao === true && vaga.finalizada) return "Finalizada";
     if (vaga.status_aprovacao === true && vaga.em_selecao) return "Em Seleção";
     if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Em Contratação";
+    if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Congelada";
+    if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Cancelada";
     if (vaga.status_aprovacao === true) return "Aprovada";
     if (vaga.status_aprovacao === "recusada") return "Recusada";
     return "Rascunho";
