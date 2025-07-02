@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",  
-    "start": "pm2 start ecosystem.config.cjs --name \"portal-quali-pessoas-dev\" --env development", 
+    "start:dev": "pm2 start ecosystem.config.cjs --name \"portal-quali-pessoas-dev\" --env development", 
     "start:hom": "pm2 start ecosystem.config.cjs --name \"portal-quali-pessoas-hom\" --env homologation", 
     "start:prd": "pm2 start ecosystem.config.cjs --name \"portal-quali-pessoas-prd\" --env production", 
-    "build": "tsc -b && vite build", 
+    "build": "tsc -b && vite build --mode production", 
     "lint": "eslint .",
     "preview": "vite preview",
     "build:staging": "tsc -b && vite build --mode homologation",

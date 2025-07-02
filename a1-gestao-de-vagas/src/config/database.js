@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const config = require('./envDB'); // Importa as configurações
 
 const connectDB = async () => {
-console.log(`VARIAVEL DIRETO DO ENV: ${process.env.MONGODB_URI}`)
-  console.log(config.mongodbUri);
+  console.log(`Variável config.mongodbUri: ${config.mongodbUri}`);
   try {
     await mongoose.connect(config.mongodbUri, {
       // Essas opções são recomendadas para evitar warnings e garantir o comportamento esperado

@@ -1,10 +1,7 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
-
-const API_URL = import.meta.env.VITE_BFF_URL;
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export interface UserType {
   data: {detalhes: {setor: string,nome: string}}
-  // ...outros campos
 }
 
 interface AuthContextType {
@@ -19,10 +16,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<UserType | null>(null);
+  
+  const API_URL = import.meta.env.VITE_BFF_URL;
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_URL}/login`, {
+      const response = await fetch(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

@@ -28,15 +28,13 @@ const __dirname = path.dirname(__filename);
 console.log(`Iniciando o servidor React...: FileName: ${__filename} e DirName: ${__dirname}`);
 
 const app = express();
-const port = process.env.VITE_PORT || 3000;
+const port = process.env.VITE_PORT || 16890;
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
 app.get('/{*splat}', (req, res) => { 
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
-
-
 
 app.listen(port, () => {
   console.log(`Servidor React rodando na porta ${port}`);

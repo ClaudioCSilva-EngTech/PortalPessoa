@@ -5,8 +5,10 @@ class AuthService {
   constructor() {
     this.host = process.env.HOST_AUTH;
     this.port = process.env.PORT_AUTH;
-    this.baseUrlLogin = `http://${this.host}:${this.port}/api/auth/login/`;
-    this.baseUrlDetalhes = `http://${this.host}:${this.port}/api/auth/me/`;
+    this.baseUrlLogin = `https://${this.host}/api/auth/login/`;
+    this.baseUrlDetalhes = `https://${this.host}/api/auth/me/`;
+    //this.baseUrlLogin = `http://${this.host}:${this.port}/api/auth/login/`;
+    //this.baseUrlDetalhes = `http://${this.host}:${this.port}/api/auth/me/`;
   }
 
   /**
@@ -15,8 +17,9 @@ class AuthService {
    * @param {string} password
    * @returns {Promise<{token: {refresh: string, access: string}, id: number, primeiro_login: boolean}>}
    */
+  
   async login(data) {
-    //console.log(this.baseUrlLogin)
+    console.log(`URL login Portal [Reuso] rota: ${this.baseUrlLogin}`)
     try {
       const response = await axios.post(this.baseUrlLogin, data, {
         headers: {
@@ -31,7 +34,7 @@ class AuthService {
 
   async detalhesUsuarioLogado(token) {
     try {
-     
+     console.info(`URL login Portal [Reuso] rota: ${this.baseUrlDetalhes}`)
       const response = await axios.get(this.baseUrlDetalhes, {
         headers: {
           'Authorization': `Bearer ${token}`,
