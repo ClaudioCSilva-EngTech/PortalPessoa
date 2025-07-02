@@ -1,19 +1,26 @@
 // ecosystem.config.js
 module.exports = {
   apps : [{
-    name: "portal-quali-pessoas", // Nome do seu aplicativo no PM2
-    script: "./src/server.js",                 // O seu script do servidor Node.js
-    watch: false,                          // Não monitorar arquivos para reinício automático (para produção)
-    ignore_watch: ["node_modules", "dist"], // O que ignorar se watch for true
-    instances: "max",                      // Ou um número específico de instâncias
-    exec_mode: "cluster",                  // Usa o modo cluster do PM2 para aproveitar múltiplos cores da CPU
-    env_homologation: {                                 // Variáveis de ambiente padrão
-      NODE_ENV: "homologation",
-      PORT: 3001,
-      VITE_PORT: 5174
+    name: "portal-quali-pessoas",
+    script: "./server.js", // O PM2 vai executar seu arquivo server.js
+    watch: false, // Geralmente não é necessário assistir em produção, mas pode ser true para dev
+    instances: 2, // Número de instâncias. Pode ser "max" para utilizar todos os cores
+    exec_mode: "fork", // ou "cluster" se quiser rodar várias instâncias e balancear carga
+    env: { // Variáveis padrão, que serão sobrescritas por env_XYZ
+      VITE_NODE_ENV: "development",
+      PORT: 3001
     },
-    env_production: {                      // Variáveis de ambiente específicas para produção
-      NODE_ENV: "production"
+    env_development: {
+      VITE_NODE_ENV: "development",
+      VITE_PORT: 3001 // Porta padrão para desenvolvimento
+    },
+    env_homologation: { // Ambiente de homologação
+      VITE_NODE_ENV: "homologation",
+      VITE_PORT: 3002 // Exemplo de porta para homologação
+    },
+    env_production: { // Ambiente de produção
+      VITE_NODE_ENV: "production",
+      VITE_PORT: 16890 // Porta padrão para produção (HTTP)
     }
   }]
 };
