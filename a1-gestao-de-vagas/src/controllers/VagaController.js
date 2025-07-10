@@ -1,7 +1,9 @@
 // src/controllers/VagaController.js
 const Vaga = require('../models/Vaga');
+const Desligado = require('../models/Desligado');
 const ApiResponse = require('../utils/ApiResponse'); // Para padronizar respostas
 const WorkflowService = require('../services/WorkflowService'); // Para gerenciar o workflow
+const DesligadoService = require('../services/DesligadoService'); // Para criação de vagas em lote
 
 class VagaController {
   async criarVaga(req, res, next) {
@@ -130,6 +132,48 @@ class VagaController {
       next(error);
     }
   }
+
+  /**
+   * Criar vagas em lote baseadas nos funcionários desligados
+   */
+  async criarVagasEmLote(req, res, next) {
+    try {
+      const { desligados, usuarioLogado } = req.body;
+
+      if (!desligados || !Array.isArray(desligados)) {
+        return ApiResponse.badRequest(res, 'desligados deve ser um array válido.');
+      }
+
+      if (desligados.length === 0) {
+        return ApiResponse.badRequest(res, 'Array de desligados não pode estar vazio.');
+      }
+
+      // Usar dados do usuário logado enviados pelo frontend ou dados do middleware de autenticação
+      const usuario = usuarioLogado || req.user || null;
+
+      console.log('VagaController - Dados do usuário para criação de vagas:', usuario);
+
+      // Usar o serviço para criar as vagas
+      const resultado = await DesligadoService.criarVagasAutomaticas(desligados, usuario);
+
+      // Preparar resposta
+      const message = `${resultado.vagasCriadas.length} vaga(s) criada(s) com sucesso.` + 
+                     (resultado.erros.length > 0 ? ` ${resultado.erros.length} erro(s) encontrado(s).` : '');
+
+      const responseData = {
+        vagasCriadas: resultado.vagasCriadas.length,
+        totalProcessados: desligados.length,
+        vagas: resultado.vagasCriadas,
+        erros: resultado.erros.length > 0 ? resultado.erros : undefined
+      };
+
+      return ApiResponse.success(res, 201, message, responseData);
+
+    } catch (error) {
+      next(error);
+    }
+  }
+
 }
 
 module.exports = new VagaController();

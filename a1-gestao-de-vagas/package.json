@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {   
+  "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "pm2 start ecosystem.config.js --env production",
     "dev": "pm2 start ecosystem.config.js --env development",
@@ -23,8 +23,10 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "mongoose": "^8.16.0",
+    "mongoose-paginate-v2": "^1.9.1",
     "nodemailer": "^7.0.3",
-    "pg": "^8.16.2"
+    "pg": "^8.16.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

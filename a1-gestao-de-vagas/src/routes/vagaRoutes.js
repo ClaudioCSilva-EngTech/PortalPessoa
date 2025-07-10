@@ -5,6 +5,7 @@ const router = express.Router();
 
 
 router.post('/', VagaController.criarVaga);
+router.post('/lote', VagaController.criarVagasEmLote); // Endpoint para criação de vagas em lote
 router.get('/', VagaController.buscarVagas);
 router.get('/:codigo', VagaController.buscarVagaPorCodigo);
 router.put('/:codigo/aprovar', VagaController.aprovarVaga); // Endpoint para aprovação

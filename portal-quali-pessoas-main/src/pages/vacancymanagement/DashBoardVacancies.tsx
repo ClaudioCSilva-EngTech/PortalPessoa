@@ -2,10 +2,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
     Box, Button, Container, Dialog, DialogContent, DialogTitle, Divider, Grid, Typography, Paper, Avatar, Chip, IconButton
 } from "@mui/material";
-import { Add, Close } from "@mui/icons-material";
+import { Add, Close, UploadFile } from "@mui/icons-material";
 import ApiServiceVaga from "../../services/ApiServiceVaga";
 import "../../styles/DashBoardVacancies.scss";
 import FormNewVacancy from "./FormNewVacancy";
+import BulkVacancyUploadModal from "../../components/BulkVacancyUploadModal/BulkVacancyUploadModal";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 
 // "Rascunho", "Pendente de aprovação", "Recusada", "Aprovada", "Em Contratação"
@@ -17,7 +18,7 @@ const KANBAN_STATUS = [
     "Cancelada"
 ];
 
-const statusColors = {
+const statusColors: Record<string, string> = {
     "Aprovada": "#4caf50",
     "Aberta": "#4caf50",
     "Recusada": "#f44336",
@@ -30,16 +31,54 @@ const statusColors = {
     "Cancelada": "#f44336"
 };
 
-const getStatus = (vaga: any) => {
-    if (vaga.status_aprovacao === false && vaga.rascunho) return "Rascunho";
-    if (vaga.status_aprovacao === false && !vaga.rascunho) return "Pendente de aprovação";
-    if (vaga.status_aprovacao === true && vaga.finalizada) return "Finalizada";
-    if (vaga.status_aprovacao === true && vaga.em_selecao) return "Em Seleção";
-    if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Em Contratação";
-    if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Congelada";
-    if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Cancelada";
-    if (vaga.status_aprovacao === true) return "Aprovada";
-    if (vaga.status_aprovacao === "recusada") return "Recusada";
+const getStatus = (vaga: any): string => {
+    // Log para debug
+    console.log(`Determinando status para vaga ${vaga?.codigo_vaga || vaga?._id}:`, {
+        status_aprovacao: vaga.status_aprovacao,
+        rascunho: vaga.rascunho,
+        finalizada: vaga.finalizada,
+        em_selecao: vaga.em_selecao,
+        em_contratacao: vaga.em_contratacao,
+        fase_workflow: vaga.fase_workflow
+    });
+
+    // Se fase_workflow está definida e é válida, usar ela
+    if (vaga.fase_workflow && KANBAN_STATUS.includes(vaga.fase_workflow)) {
+        console.log(`Status determinado por fase_workflow: ${vaga.fase_workflow}`);
+        return vaga.fase_workflow;
+    }
+
+    // Lógica de fallback baseada nos campos de status
+    if (vaga.status_aprovacao === false && vaga.rascunho) {
+        console.log('Status determinado: Rascunho (não aprovada + rascunho)');
+        return "Rascunho";
+    }
+    if (vaga.status_aprovacao === false && !vaga.rascunho) {
+        console.log('Status determinado: Pendente de aprovação (não aprovada + não rascunho)');
+        return "Pendente de aprovação";
+    }
+    if (vaga.status_aprovacao === true && vaga.finalizada) {
+        console.log('Status determinado: Finalizada (aprovada + finalizada)');
+        return "Finalizada";
+    }
+    if (vaga.status_aprovacao === true && vaga.em_selecao) {
+        console.log('Status determinado: Em Seleção (aprovada + em seleção)');
+        return "Em Seleção";
+    }
+    if (vaga.status_aprovacao === true && vaga.em_contratacao) {
+        console.log('Status determinado: Em Contratação (aprovada + em contratação)');
+        return "Em Contratação";
+    }
+    if (vaga.status_aprovacao === true) {
+        console.log('Status determinado: Aberta (aprovada sem outros flags)');
+        return "Aberta"; // Mudança: vagas aprovadas sem outros flags vão para "Aberta"
+    }
+    if (vaga.status_aprovacao === "recusada") {
+        console.log('Status determinado: Recusada');
+        return "Recusada";
+    }
+    
+    console.log('Status determinado: Rascunho (fallback)');
     return "Rascunho";
 };
 
@@ -47,6 +86,7 @@ const DashBoardVacancies: React.FC = () => {
     const [kanban, setKanban] = useState<{ [key: string]: any[] }>({});
     const [openForm, setOpenForm] = useState(false);
     const [openDetail, setOpenDetail] = useState(false);
+    const [openBulkUpload, setOpenBulkUpload] = useState(false);
     const [selectedVaga, setSelectedVaga] = useState<any>(null);
 
     // Memoize currentUser e isRH para evitar re-renderizações desnecessárias
@@ -87,16 +127,128 @@ const DashBoardVacancies: React.FC = () => {
             setKanban(kanbanData);
         }
         fetchVagas();
-    }, []);
+    }, [isRH, currentUser?.data?.auth?.id]);
 
     // Função para adicionar nova vaga ao kanban
-    const handleAddVaga = (novaVaga: any) => {
+    const handleAddVaga = (novaVaga: any): void => {
         const status = getStatus(novaVaga);
         setKanban(prev => ({
             ...prev,
             [status]: [novaVaga, ...(prev[status] || [])]
         }));
         setOpenForm(false);
+    };
+
+    // Função para recarregar vagas do backend (usar quando necessário)
+    const reloadVagas = async (): Promise<void> => {
+        console.log('🔄 Recarregando vagas do backend...');
+        try {
+            let result;
+            if (isRH) {
+                result = await ApiServiceVaga.consultarVagas();
+            } else {
+                result = await ApiServiceVaga.consultarVagas({ _idUsuario: currentUser?.data?.auth?.id });
+            }
+            const data = result?.data;
+            const vagas = Array.isArray(data) ? data : (data ? [data] : []);
+
+            const kanbanData: { [key: string]: any[] } = {};
+            KANBAN_STATUS.forEach(status => kanbanData[status] = []);
+            vagas.forEach((vaga: any) => {
+                const status = vaga.fase_workflow && KANBAN_STATUS.includes(vaga.fase_workflow)
+                    ? vaga.fase_workflow
+                    : getStatus(vaga);
+                if (kanbanData[status]) kanbanData[status].push(vaga);
+            });
+            setKanban(kanbanData);
+            console.log('✅ Vagas recarregadas com sucesso');
+        } catch (error) {
+            console.error('❌ Erro ao recarregar vagas:', error);
+        }
+    };
+
+    // Função para lidar com múltiplas vagas criadas em lote
+    const handleBulkVagasCriadas = async (vagas: any[]): Promise<void> => {
+        console.log('🚀 Iniciando atualização do kanban com vagas em lote');
+        console.log('📊 Vagas recebidas:', vagas.length);
+        console.log('📋 Estrutura das vagas recebidas:', vagas.map(v => ({ 
+            id: v._id, 
+            codigo: v.codigo_vaga, 
+            fase_workflow: v.fase_workflow, 
+            status_aprovacao: v.status_aprovacao,
+            rascunho: v.rascunho,
+            posicao: v.detalhe_vaga?.posicaoVaga,
+            solicitante: v.solicitante
+        })));
+        
+        if (!Array.isArray(vagas) || vagas.length === 0) {
+            console.warn('⚠️  Nenhuma vaga válida recebida para atualizar o kanban');
+            return;
+        }
+
+        // Atualizar kanban em uma única operação para evitar condições de corrida
+        setKanban(prevKanban => {
+            console.log('🔄 Estado atual do kanban:', Object.keys(prevKanban).map(key => 
+                `${key}: ${prevKanban[key]?.length || 0} vagas`
+            ));
+            
+            const newKanban = { ...prevKanban };
+            
+            // Garantir que todas as colunas existam
+            KANBAN_STATUS.forEach(status => {
+                if (!newKanban[status]) {
+                    newKanban[status] = [];
+                }
+            });
+            
+            // Processar cada vaga
+            vagas.forEach(vaga => {
+                // Usar o campo fase_workflow primeiro, depois fallback para getStatus
+                const status = vaga.fase_workflow && KANBAN_STATUS.includes(vaga.fase_workflow)
+                    ? vaga.fase_workflow
+                    : getStatus(vaga);
+                
+                console.log(`📌 Processando vaga ${vaga.codigo_vaga}:`);
+                console.log(`   - Status determinado: ${status}`);
+                console.log(`   - fase_workflow: ${vaga.fase_workflow}`);
+                console.log(`   - status_aprovacao: ${vaga.status_aprovacao}`);
+                
+                // Verificar se a vaga já existe em qualquer coluna para evitar duplicatas
+                let vagaExiste = false;
+                for (const col of KANBAN_STATUS) {
+                    if (newKanban[col]?.some(v => 
+                        v._id === vaga._id || v.codigo_vaga === vaga.codigo_vaga
+                    )) {
+                        vagaExiste = true;
+                        console.log(`   ℹ️  Vaga ${vaga.codigo_vaga} já existe na coluna ${col}`);
+                        break;
+                    }
+                }
+                
+                if (!vagaExiste) {
+                    // Adicionar no início da lista
+                    newKanban[status] = [vaga, ...newKanban[status]];
+                    console.log(`   ✅ Vaga ${vaga.codigo_vaga} adicionada ao status ${status}`);
+                } else {
+                    console.log(`   ⚠️  Vaga ${vaga.codigo_vaga} já existe no kanban, ignorando`);
+                }
+            });
+            
+            console.log('🎯 Novo estado do kanban:', Object.keys(newKanban).map(key => 
+                `${key}: ${newKanban[key].length} vagas`
+            ));
+            
+            return newKanban;
+        });
+        
+        console.log('✅ Kanban atualizado com sucesso!');
+        
+        // Opcional: recarregar do backend para garantir sincronização completa
+        // Aguardar um momento e então recarregar silenciosamente
+        setTimeout(() => {
+            console.log('🔄 Recarregando vagas do backend para sincronização completa...');
+            reloadVagas();
+        }, 1500);
     };
 
     // Atualiza a fase_workflow da vaga ao arrastar
@@ -187,61 +339,67 @@ const DashBoardVacancies: React.FC = () => {
             <DialogContent sx={{ pt: 0 }}>
                 {selectedVaga && (
                     <Box sx={{ mt: 2 }}>
-                        <Grid container spacing={2}>
-                            <Grid>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 2 }}>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Código da Vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.codigo_vaga}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Solicitante</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.solicitante}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Data de abertura</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.data_abertura ? new Date(selectedVaga.data_abertura).toLocaleDateString() : ""}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Status de aprovação</Typography>
                                 <Chip
                                     label={getStatus(selectedVaga)}
                                     sx={{
-                                        border: `2px solid ${statusColors[getStatus(selectedVaga)]}`,
-                                        color: statusColors[getStatus(selectedVaga)],
+                                        border: `2px solid ${statusColors[getStatus(selectedVaga)] || '#bdbdbd'}`,
+                                        color: statusColors[getStatus(selectedVaga)] || '#757575',
                                         fontWeight: 700,
                                         bgcolor: "#fff",
                                         borderRadius: 2,
                                     }}
                                 />
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Posição da vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.posicaoVaga}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Setor</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.setor}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Motivo da contratação</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.motivoSolicitacao}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Tipo de contratação</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.tipoContratacao}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Empresa contratante</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.empresaContratante}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Detalhes da vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.requisitosVaga}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Benefícios da vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.beneficiosVaga}</Typography>
-                            </Grid>
-                        </Grid>
+                            </Box>
+                            {selectedVaga.detalhe_vaga?.motivoAfastamento && (
+                                <Box sx={{ gridColumn: '1 / -1' }}>
+                                    <Typography variant="subtitle2" color="text.secondary">Motivo de Contratação ou Afastamento</Typography>
+                                    <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.motivoAfastamento}</Typography>
+                                </Box>
+                            )}
+                        </Box>
                     </Box>
                 )}
             </DialogContent>
@@ -253,15 +411,26 @@ const DashBoardVacancies: React.FC = () => {
             <Container maxWidth={false} disableGutters className="dashboard-main-container dashboard-kanban-container">
                 <Box className="dashboard-header">
                     <Typography className="dashboard-title">Vagas Abertas</Typography>
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        startIcon={<Add />}
-                        onClick={() => setOpenForm(true)}
-                        className="dashboard-btn-abrir-vaga"
-                    >
-                        Abrir Vaga
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<UploadFile />}
+                            onClick={() => setOpenBulkUpload(true)}
+                            className="dashboard-btn-bulk-upload"
+                        >
+                            Abrir Vagas em Lote
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<Add />}
+                            onClick={() => setOpenForm(true)}
+                            className="dashboard-btn-abrir-vaga"
+                        >
+                            Abrir Vaga
+                        </Button>
+                    </Box>
                 </Box>
                 <Box className="dashboard-kanban-scroll">
                     <DragDropContext onDragEnd={handleDragEnd}>
@@ -298,6 +467,8 @@ const DashBoardVacancies: React.FC = () => {
                 </Box>
             </Container>
             {renderVagaDetail()}
+            
+            {/* Modal para criação de vaga individual */}
             <Dialog
                 open={openForm}
                 onClose={() => setOpenForm(false)}
@@ -328,6 +499,13 @@ const DashBoardVacancies: React.FC = () => {
                     />
                 </DialogContent>
             </Dialog>
+
+            {/* Modal para upload em lote */}
+            <BulkVacancyUploadModal
+                open={openBulkUpload}
+                onClose={() => setOpenBulkUpload(false)}
+                onVagasCriadas={handleBulkVagasCriadas}
+            />
         </Box>
     );
 };

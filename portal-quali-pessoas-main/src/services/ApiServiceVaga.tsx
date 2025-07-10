@@ -14,6 +14,29 @@ function getAuthHeaders() {
   };
 }
 
+function getCurrentUser() {
+  try {
+    const userStr = sessionStorage.getItem('user');
+    if (!userStr) return null;
+    
+    const userObj = JSON.parse(userStr);
+    const detalhes = userObj?.data?.detalhes;
+    
+    if (!detalhes) return null;
+    
+    return {
+      id: detalhes.id_apdata || detalhes.id || 'SISTEMA',
+      nome: detalhes.nome || 'Usuário Sistema',
+      cargo: detalhes.cargo || 'Não especificado',
+      setor: detalhes.setor || 'Não especificado',
+      email: detalhes.e_mail || detalhes.email || ''
+    };
+  } catch (error) {
+    console.warn('Erro ao extrair dados do usuário:', error);
+    return null;
+  }
+}
+
 class ApiServiceVaga {
   // Cadastrar vaga
   static async cadastrarVaga(vaga: Vaga): Promise<VagaResponse> {
@@ -98,14 +121,13 @@ class ApiServiceVaga {
     updatedAtName?: string
   ): Promise<VagaResponse> {
     // Recupera user e updatedAtName do sessionStorage se não forem passados
-    let userName = updatedAtName;    
-      try {
-        const userStr = sessionStorage.getItem('user');
-        const userObj = userStr ? JSON.parse(userStr) : {};
-        userName = userName || userObj?.data?.detalhes?.nome;
-      } catch {
-        // fallback: não faz nada
-      }    
+    let userName = updatedAtName;
+    
+    if (!userName) {
+      const currentUser = getCurrentUser();
+      userName = currentUser?.nome;
+    }
+    
     const body = {
       fase_workflow,
       updatedAtName: userName
@@ -117,6 +139,56 @@ class ApiServiceVaga {
       body: JSON.stringify(body),
     });
     return response.json();
+  }
+
+  // Métodos para gerenciar desligados
+  static async verificarDesligadosExistentes(idsContratados: string[]): Promise<any> {
+    const response = await fetch(`${API_BASE}/desligados/check-existing`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ idsContratados }),
+    });
+    return response.json();
+  }
+
+  static async salvarDesligados(desligados: any[]): Promise<any> {
+    const response = await fetch(`${API_BASE}/desligados`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ desligados }),
+    });
+    return response.json();
+  }
+
+  static async criarVagasEmLote(desligados: any[]): Promise<VagaResponse> {
+    // Obter dados do usuário logado
+    const usuarioLogado = getCurrentUser();
+    
+    // Validar se o usuário está logado
+    if (!usuarioLogado) {
+      console.error('Usuário não encontrado para criação de vagas em lote');
+      return {
+        success: false,
+        message: 'Usuário não encontrado. Faça login novamente.',
+        data: [] as any
+      };
+    }
+    
+    console.log('Criando vagas em lote com usuário:', usuarioLogado);
+    
+    const response = await fetch(`${API_BASE}/vagas/lote`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ 
+        desligados,
+        usuarioLogado 
+      }),
+    });
+    
+    const result = await response.json();
+    console.log('Resultado da criação de vagas em lote:', result);
+    
+    return result;
   }
 }
 
