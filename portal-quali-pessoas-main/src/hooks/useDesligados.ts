@@ -37,6 +37,7 @@ interface UseDesligadosReturn {
   loading: boolean;
   error: string | null;
   processarArquivoDesligados: (file: File) => Promise<{ success: boolean; existingEmployees: ExistingEmployee[]; newEmployees: Desligado[] }>;
+  validarArquivoDesligados: (file: File) => Promise<{ success: boolean; existingEmployees: ExistingEmployee[]; newEmployees: Desligado[] }>;
 }
 
 const API_BASE = import.meta.env.VITE_BFF_URL;
@@ -83,60 +84,118 @@ export const useDesligados = (): UseDesligadosReturn => {
     return semicolonCount > commaCount ? ';' : ',';
   };
 
+  const parseAndValidateFile = async (file: File): Promise<{ desligados: Desligado[] }> => {
+    const text = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file, 'UTF-8');
+    });
+
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    if (lines.length <= 1) {
+      throw new window.Error('Arquivo deve conter pelo menos um cabeçalho e uma linha de dados');
+    }
+
+    // Detectar delimitador automaticamente
+    const delimiter = detectDelimiter(text);
+
+    // Parse das linhas (ignorando cabeçalho)
+    const desligados: Desligado[] = lines.slice(1).map(line => {
+      const values = parseCSVLine(line, delimiter);
+      
+      // Mapeamento das colunas conforme posições no arquivo CSV fornecido
+      return {
+        razaoSocialEmpresa: values[0] || '',
+        local: values[1] || '',
+        sufixoCnpj: values[3] || '', // Sufixo do CNPJ está na posição 3
+        idContratado: values[6] || '', // Id Contratado está na posição 6
+        nomeCompleto: values[8] || '', // Nome Completo está na posição 8
+        vinculo: values[11] || '', // Vínculo está na posição 11
+        dataAdmissao: values[12] || '', // Data da Admissão está na posição 12
+        cargo: values[13] || '', // Cargo está na posição 13
+        codigoEstrutura: values[17] || '', // Código de Estrutura está na posição 17
+        centroCusto: values[18] || '', // Centro de Custo está na posição 18
+        situacao: values[20] || '', // Situação está na posição 20
+        dataInicioSituacao: values[21] || '', // Data Início na Situação está na posição 21
+        dataRescisao: values[22] || '', // Data da Rescisão está na posição 22
+        dataNascimento: values[23] || '', // Data do Nascimento está na posição 23
+        estadoCivil: values[29] || '', // Estado Civil está na posição 29
+        grauInstrucao: values[30] || '', // Grau de Instrução está na posição 30
+        siglaSexo: values[31] || '', // Sigla Sexo está na posição 31
+        segmentoEtnicoRacial: values[63] || '', // Segmento Étnico e Racial está na posição 63
+        idHierarquia: values[64] || '', // Id Hierarquia está na posição 64
+        hierarquia: values[65] || '', // Hierarquia está na posição 65
+        dataInclusao: new Date().toISOString()
+      };
+    }).filter(d => d.idContratado && d.nomeCompleto); // Filtra apenas registros com dados essenciais
+
+    if (desligados.length === 0) {
+      throw new window.Error('Nenhum registro válido encontrado no arquivo');
+    }
+
+    return { desligados };
+  };
+
+  const validarArquivoDesligados = async (file: File): Promise<{ success: boolean; existingEmployees: ExistingEmployee[]; newEmployees: Desligado[] }> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('🔍 Validando arquivo sem persistir dados...');
+      
+      // Parse e validação do arquivo
+      const { desligados } = await parseAndValidateFile(file);
+
+      // Verificar quais funcionários já existem na base (sem persistir)
+      const idsContratados = desligados.map(d => d.idContratado);
+      const checkResponse = await fetch(`${API_BASE}/desligados/check-existing`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ idsContratados })
+      });
+
+      if (!checkResponse.ok) {
+        throw new window.Error('Erro ao verificar funcionários existentes');
+      }
+
+      const checkResult = await checkResponse.json();
+      const existingIds = new Set(checkResult.data?.existingIds || []);
+      const existingEmployees: ExistingEmployee[] = checkResult.data?.existing || [];
+
+      // Separar novos funcionários dos existentes
+      const newEmployees = desligados.filter(d => !existingIds.has(d.idContratado));
+
+      console.log('✅ Arquivo validado com sucesso:');
+      console.log(`   - Funcionários existentes: ${existingEmployees.length}`);
+      console.log(`   - Novos funcionários: ${newEmployees.length}`);
+      console.log('   - Nenhum dado foi persistido');
+
+      return {
+        success: true,
+        existingEmployees,
+        newEmployees
+      };
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao validar arquivo';
+      setError(errorMessage);
+      throw new window.Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const processarArquivoDesligados = async (file: File): Promise<{ success: boolean; existingEmployees: ExistingEmployee[]; newEmployees: Desligado[] }> => {
     setLoading(true);
     setError(null);
 
     try {
-      const text = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.onerror = reject;
-        reader.readAsText(file, 'UTF-8');
-      });
-
-      const lines = text.split('\n').filter(line => line.trim());
+      console.log('🔄 Processando arquivo e persistindo dados...');
       
-      if (lines.length <= 1) {
-        throw new window.Error('Arquivo deve conter pelo menos um cabeçalho e uma linha de dados');
-      }
-
-      // Detectar delimitador automaticamente
-      const delimiter = detectDelimiter(text);
-
-      // Parse das linhas (ignorando cabeçalho)
-      const desligados: Desligado[] = lines.slice(1).map(line => {
-        const values = parseCSVLine(line, delimiter);
-        
-        // Mapeamento das colunas conforme posições no arquivo CSV fornecido
-        return {
-          razaoSocialEmpresa: values[0] || '',
-          local: values[1] || '',
-          sufixoCnpj: values[3] || '', // Sufixo do CNPJ está na posição 3
-          idContratado: values[6] || '', // Id Contratado está na posição 6
-          nomeCompleto: values[8] || '', // Nome Completo está na posição 8
-          vinculo: values[11] || '', // Vínculo está na posição 11
-          dataAdmissao: values[12] || '', // Data da Admissão está na posição 12
-          cargo: values[13] || '', // Cargo está na posição 13
-          codigoEstrutura: values[17] || '', // Código de Estrutura está na posição 17
-          centroCusto: values[18] || '', // Centro de Custo está na posição 18
-          situacao: values[20] || '', // Situação está na posição 20
-          dataInicioSituacao: values[21] || '', // Data Início na Situação está na posição 21
-          dataRescisao: values[22] || '', // Data da Rescisão está na posição 22
-          dataNascimento: values[23] || '', // Data do Nascimento está na posição 23
-          estadoCivil: values[29] || '', // Estado Civil está na posição 29
-          grauInstrucao: values[30] || '', // Grau de Instrução está na posição 30
-          siglaSexo: values[31] || '', // Sigla Sexo está na posição 31
-          segmentoEtnicoRacial: values[63] || '', // Segmento Étnico e Racial está na posição 63
-          idHierarquia: values[64] || '', // Id Hierarquia está na posição 64
-          hierarquia: values[65] || '', // Hierarquia está na posição 65
-          dataInclusao: new Date().toISOString()
-        };
-      }).filter(d => d.idContratado && d.nomeCompleto); // Filtra apenas registros com dados essenciais
-
-      if (desligados.length === 0) {
-        throw new window.Error('Nenhum registro válido encontrado no arquivo');
-      }
+      // Parse e validação do arquivo
+      const { desligados } = await parseAndValidateFile(file);
 
       // Verificar quais funcionários já existem na base
       const idsContratados = desligados.map(d => d.idContratado);
@@ -159,6 +218,7 @@ export const useDesligados = (): UseDesligadosReturn => {
 
       // Salvar apenas os novos funcionários
       if (newEmployees.length > 0) {
+        console.log(`💾 Persistindo ${newEmployees.length} novos funcionários...`);
         const saveResponse = await fetch(`${API_BASE}/desligados`, {
           method: 'POST',
           headers: getAuthHeaders(),
@@ -168,6 +228,9 @@ export const useDesligados = (): UseDesligadosReturn => {
         if (!saveResponse.ok) {
           throw new window.Error('Erro ao salvar funcionários desligados');
         }
+        console.log('✅ Funcionários persistidos com sucesso');
+      } else {
+        console.log('ℹ️  Nenhum funcionário novo para persistir');
       }
 
       return {
@@ -188,6 +251,7 @@ export const useDesligados = (): UseDesligadosReturn => {
   return {
     loading,
     error,
-    processarArquivoDesligados
+    processarArquivoDesligados,
+    validarArquivoDesligados
   };
 };
