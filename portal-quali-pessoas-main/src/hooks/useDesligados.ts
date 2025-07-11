@@ -38,6 +38,16 @@ interface UseDesligadosReturn {
   error: string | null;
   processarArquivoDesligados: (file: File) => Promise<{ success: boolean; existingEmployees: ExistingEmployee[]; newEmployees: Desligado[] }>;
   validarArquivoDesligados: (file: File) => Promise<{ success: boolean; existingEmployees: ExistingEmployee[]; newEmployees: Desligado[] }>;
+  enviarRelatorioEmail: (emailData: EmailData) => Promise<{ success: boolean; message: string; resultados?: any }>;
+}
+
+export interface EmailData {
+  titulo: string;
+  remetente: string;
+  destinatarios: string;
+  corpo: string;
+  dataInicio: string;
+  dataFim: string;
 }
 
 const API_BASE = import.meta.env.VITE_BFF_URL;
@@ -248,10 +258,47 @@ export const useDesligados = (): UseDesligadosReturn => {
     }
   };
 
+  const enviarRelatorioEmail = async (emailData: EmailData): Promise<{ success: boolean; message: string; resultados?: any }> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('📧 Enviando relatório por email...');
+      
+      const response = await fetch(`${API_BASE}/desligados/relatorio/email`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(emailData)
+      });
+
+      if (!response.ok) {
+        throw new window.Error('Erro ao enviar email');
+      }
+
+      const result = await response.json();
+      
+      console.log('✅ Email enviado com sucesso:', result.data);
+      
+      return {
+        success: true,
+        message: result.message || 'Email enviado com sucesso',
+        resultados: result.data
+      };
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao enviar email';
+      setError(errorMessage);
+      throw new window.Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
     processarArquivoDesligados,
-    validarArquivoDesligados
+    validarArquivoDesligados,
+    enviarRelatorioEmail
   };
 };

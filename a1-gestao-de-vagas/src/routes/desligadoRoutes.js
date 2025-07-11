@@ -49,4 +49,11 @@ router.get('/contratado/:idContratado', DesligadoController.buscarPorIdContratad
  */
 router.get('/relatorio/periodo', DesligadoController.buscarDesligadosPorData);
 
+/**
+ * @route POST /desligados/relatorio/email
+ * @desc Enviar relatório de desligados por email
+ * @access Private
+ */
+router.post('/relatorio/email', DesligadoController.enviarRelatorioEmail);
+
 module.exports = router;

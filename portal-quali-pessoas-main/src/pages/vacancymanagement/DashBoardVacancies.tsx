@@ -23,7 +23,9 @@ const KANBAN_STATUS = [
     "Cancelada"
 ];
 
-const statusColors = {
+type StatusType = "Aprovada" | "Aberta" | "Recusada" | "Pendente de aprovação" | "Rascunho" | "Em Seleção" | "Em Contratação" | "Finalizada" | "Congelada" | "Cancelada";
+
+const statusColors: Record<StatusType, string> = {
     "Aprovada": "#4caf50",
     "Aberta": "#4caf50",
     "Recusada": "#f44336",
@@ -36,17 +38,24 @@ const statusColors = {
     "Cancelada": "#f44336"
 };
 
-const getStatus = (vaga: any) => {
+const getStatus = (vaga: any): StatusType => {
+    // Priorizar fase_workflow se estiver definida e for válida
+    if (vaga.fase_workflow && KANBAN_STATUS.includes(vaga.fase_workflow)) {
+        return vaga.fase_workflow;
+    }
+    
+    // Fallback para lógica antiga (para compatibilidade)
     if (vaga.status_aprovacao === false && vaga.rascunho) return "Rascunho";
     if (vaga.status_aprovacao === false && !vaga.rascunho) return "Pendente de aprovação";
     if (vaga.status_aprovacao === true && vaga.finalizada) return "Finalizada";
     if (vaga.status_aprovacao === true && vaga.em_selecao) return "Em Seleção";
     if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Em Contratação";
-    if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Congelada";
-    if (vaga.status_aprovacao === true && vaga.em_contratacao) return "Cancelada";
-    if (vaga.status_aprovacao === true) return "Aprovada";
+    if (vaga.status_aprovacao === true && vaga.congelada) return "Congelada";
+    if (vaga.status_aprovacao === true && vaga.cancelada) return "Cancelada";
+    if (vaga.status_aprovacao === true) return "Aberta"; // Default para vagas aprovadas
     if (vaga.status_aprovacao === "recusada") return "Recusada";
-    return "Rascunho";
+    
+    return "Aberta"; // Default mais apropriado
 };
 
 const DashBoardVacancies: React.FC = () => {
@@ -88,6 +97,16 @@ const DashBoardVacancies: React.FC = () => {
         currentUser?.data?.detalhes?.setor?.toUpperCase() === "DEPARTAMENTOPESSOAL",
         [currentUser]
     );
+
+    // Função para calcular total de vagas abertas (excluindo Canceladas)
+    const getTotalVagasAbertas = () => {
+        return Object.keys(kanban).reduce((total, status) => {
+            if (status !== 'Cancelada') {
+                return total + (kanban[status]?.length || 0);
+            }
+            return total;
+        }, 0);
+    };
 
     useEffect(() => {
         async function fetchVagas() {
@@ -329,17 +348,37 @@ const DashBoardVacancies: React.FC = () => {
     };
 
     // Confirmar finalização da vaga
-    const handleConfirmarFinalizacao = async (contratadoNome: string) => {
+    const handleConfirmarFinalizacao = async (dadosContratado: {
+        nome: string;
+        telefone: string;
+        email: string;
+        rg: string;
+        cpf: string;
+        admissao: string;
+        treinamento: string;
+        hierarquia: string;
+        temTreinamento: boolean;
+    }) => {
         if (!pendingMove) return;
 
         const { vaga, sourceStatus, destStatus, destIndex } = pendingMove;
 
         try {
-            // Chamar API com dados adicionais
+            // Chamar API com dados completos do contratado
             await ApiServiceVaga.atualizarFaseVagaComDados(
                 vaga.codigo_vaga,
                 destStatus,
-                { contratado_nome: contratadoNome }
+                {
+                    contratado_nome: dadosContratado.nome,
+                    contratado_telefone: dadosContratado.telefone,
+                    contratado_email: dadosContratado.email,
+                    contratado_rg: dadosContratado.rg,
+                    contratado_cpf: dadosContratado.cpf,
+                    contratado_admissao: dadosContratado.admissao,
+                    contratado_treinamento: dadosContratado.temTreinamento ? dadosContratado.treinamento : null,
+                    contratado_hierarquia: dadosContratado.hierarquia,
+                    tem_treinamento: dadosContratado.temTreinamento
+                }
             );
 
             // Atualizar o kanban
@@ -350,7 +389,15 @@ const DashBoardVacancies: React.FC = () => {
             if (vagaIndex !== -1) {
                 const [movedVaga] = sourceList.splice(vagaIndex, 1);
                 movedVaga.fase_workflow = destStatus;
-                movedVaga.contratado_nome = contratadoNome;
+                movedVaga.contratado_nome = dadosContratado.nome;
+                movedVaga.contratado_telefone = dadosContratado.telefone;
+                movedVaga.contratado_email = dadosContratado.email;
+                movedVaga.contratado_rg = dadosContratado.rg;
+                movedVaga.contratado_cpf = dadosContratado.cpf;
+                movedVaga.contratado_admissao = dadosContratado.admissao;
+                movedVaga.contratado_treinamento = dadosContratado.temTreinamento ? dadosContratado.treinamento : null;
+                movedVaga.contratado_hierarquia = dadosContratado.hierarquia;
+                movedVaga.tem_treinamento = dadosContratado.temTreinamento;
                 movedVaga.data_finalizacao = new Date();
                 destList.splice(destIndex, 0, movedVaga);
 
@@ -513,16 +560,21 @@ const DashBoardVacancies: React.FC = () => {
                             </Box>
                             <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Status de aprovação</Typography>
-                                <Chip
-                                    label={getStatus(selectedVaga)}
-                                    sx={{
-                                        border: `2px solid ${statusColors[getStatus(selectedVaga)] || '#bdbdbd'}`,
-                                        color: statusColors[getStatus(selectedVaga)] || '#757575',
-                                        fontWeight: 700,
-                                        bgcolor: "#fff",
-                                        borderRadius: 2,
-                                    }}
-                                />
+                                {(() => {
+                                    const status = getStatus(selectedVaga);
+                                    return (
+                                        <Chip
+                                            label={status}
+                                            sx={{
+                                                border: `2px solid ${statusColors[status] || '#bdbdbd'}`,
+                                                color: statusColors[status] || '#757575',
+                                                fontWeight: 700,
+                                                bgcolor: "#fff",
+                                                borderRadius: 2,
+                                            }}
+                                        />
+                                    );
+                                })()}
                             </Box>
                             <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Posição da vaga</Typography>
@@ -569,7 +621,9 @@ const DashBoardVacancies: React.FC = () => {
         <Box className="dashboard-vacancies-bg">
             <Container maxWidth={false} disableGutters className="dashboard-main-container dashboard-kanban-container">
                 <Box className="dashboard-header">
-                    <Typography className="dashboard-title" sx={{ fontWeight: 'bold' }}>Vagas Abertas</Typography>
+                    <Typography className="dashboard-title" sx={{ fontWeight: 'bold' }}>
+                        Vagas Abertas ({getTotalVagasAbertas()})
+                    </Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         {isDepartamentoPessoal && (
                             <Button
@@ -616,7 +670,9 @@ const DashBoardVacancies: React.FC = () => {
                                                 ref={provided.innerRef}
                                                 {...provided.droppableProps}
                                             >
-                                                <Typography className="dashboard-kanban-title">{status}</Typography>
+                                                <Typography className="dashboard-kanban-title">
+                                                    {status} ({vagasStatus.length})
+                                                </Typography>
                                                 <Divider className="dashboard-kanban-divider" />
                                                 <Box>
                                                     {vagasStatus.length === 0 ? (

@@ -1,6 +1,7 @@
 // src/controllers/DesligadoController.js
 const Desligado = require('../models/Desligado');
 const ApiResponse = require('../utils/ApiResponse');
+const MailService = require('../services/MailService');
 
 class DesligadoController {
   
@@ -267,6 +268,68 @@ class DesligadoController {
       });
 
     } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Enviar relatório de desligados por email
+   */
+  async enviarRelatorioEmail(req, res, next) {
+    try {
+      const { titulo, remetente, destinatarios, corpo, dataInicio, dataFim } = req.body;
+
+      console.log('Enviar relatório por email:', { titulo, remetente, destinatarios: destinatarios?.split(',').length, dataInicio, dataFim });
+
+      // Validações
+      if (!titulo || !remetente || !destinatarios || !corpo) {
+        return ApiResponse.badRequest(res, 'Título, remetente, destinatários e corpo do email são obrigatórios.');
+      }
+
+      if (!dataInicio || !dataFim) {
+        return ApiResponse.badRequest(res, 'dataInicio e dataFim são obrigatórios.');
+      }
+
+      // Criar conexão de email
+      const transporter = await MailService.criarConexaoEmail();
+
+      // Separar destinatários e limpar espaços
+      const emailsDestinatarios = destinatarios
+        .split(',')
+        .map(email => email.trim())
+        .filter(email => email.length > 0);
+
+      if (emailsDestinatarios.length === 0) {
+        return ApiResponse.badRequest(res, 'Pelo menos um destinatário válido é necessário.');
+      }
+
+      // Enviar email para cada destinatário
+      const resultados = [];
+      for (const emailDestinatario of emailsDestinatarios) {
+        try {
+          await MailService.SendMail(titulo, corpo, emailDestinatario, transporter);
+          resultados.push({ email: emailDestinatario, status: 'enviado' });
+          console.log(`✅ Email enviado para: ${emailDestinatario}`);
+        } catch (emailError) {
+          console.error(`❌ Erro ao enviar email para ${emailDestinatario}:`, emailError);
+          resultados.push({ email: emailDestinatario, status: 'erro', erro: emailError.message });
+        }
+      }
+
+      const sucessos = resultados.filter(r => r.status === 'enviado').length;
+      const erros = resultados.filter(r => r.status === 'erro').length;
+
+      return ApiResponse.success(res, 200, `Relatório enviado com sucesso para ${sucessos} destinatário(s). ${erros > 0 ? `${erros} falha(s).` : ''}`, {
+        resultados,
+        resumo: {
+          total: emailsDestinatarios.length,
+          sucessos,
+          erros
+        }
+      });
+
+    } catch (error) {
+      console.error('Erro ao enviar email:', error);
       next(error);
     }
   }

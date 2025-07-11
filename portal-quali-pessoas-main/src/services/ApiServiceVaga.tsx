@@ -253,6 +253,14 @@ class ApiServiceVaga {
     fase_workflow: string,
     dadosAdicionais?: {
       contratado_nome?: string;
+      contratado_telefone?: string;
+      contratado_email?: string;
+      contratado_rg?: string;
+      contratado_cpf?: string;
+      contratado_admissao?: string;
+      contratado_treinamento?: string | null;
+      contratado_hierarquia?: string;
+      tem_treinamento?: boolean;
       motivo_congelamento?: string;
       motivo_cancelamento?: string;
     },

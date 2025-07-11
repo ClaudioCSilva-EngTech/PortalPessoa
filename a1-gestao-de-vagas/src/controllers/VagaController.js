@@ -5,16 +5,33 @@ const WorkflowService = require('../services/WorkflowService'); // Para gerencia
 
 class VagaController {
   async criarVaga(req, res, next) {
-    console.log(`Criar Vaga Body: ${req.body.data}`)
+    console.log(`Criar Vaga Body:`, req.body);
     try {
-      const novaVaga = new Vaga(req.body);
+      // Garantir que a fase_workflow está correta ao criar
+      const dadosVaga = {
+        ...req.body,
+        fase_workflow: req.body.fase_workflow || 'Aberta', // Definir fase padrão
+        status_aprovacao: req.body.status_aprovacao !== undefined ? req.body.status_aprovacao : true // Default para aprovada se não especificado
+      };
 
+      const novaVaga = new Vaga(dadosVaga);
       await novaVaga.save();
 
-      // Iniciar o workflow de aprovação
-      await WorkflowService.iniciarAprovacao(novaVaga);
+      console.log(`✅ Nova vaga criada:`, {
+        codigo: novaVaga.codigo_vaga,
+        fase: novaVaga.fase_workflow,
+        status: novaVaga.status_aprovacao,
+        posicao: novaVaga.detalhe_vaga?.posicaoVaga
+      });
+
+      // Iniciar o workflow de aprovação apenas se necessário
+      if (!novaVaga.status_aprovacao) {
+        await WorkflowService.iniciarAprovacao(novaVaga);
+      }
+
       return ApiResponse.success(res, 201, 'Vaga criada com sucesso e workflow iniciado.', novaVaga);
     } catch (error) {
+      console.error('❌ Erro ao criar vaga:', error);
       next(error); // Encaminha o erro para o errorHandler
     }
   }
@@ -23,15 +40,34 @@ class VagaController {
     try {
       const { _idUsuario, status_aprovacao, setor, posicaoVaga } = req.query;
       const query = {};
+      
       if (status_aprovacao !== undefined) query.status_aprovacao = status_aprovacao === 'true';
       if (setor) query['detalhe_vaga.setor'] = setor;
-      // if (posicaoVaga) query['detalhe_vaga.posicaoVaga'] = { $regex: new RegExp(posicaoVaga, 'i') }; // Busca por parte do nome
-      if( _idUsuario) query['_idUsuario'] = _idUsuario;
+      if (posicaoVaga) query['detalhe_vaga.posicaoVaga'] = { $regex: new RegExp(posicaoVaga, 'i') };
+      if (_idUsuario) query['_idUsuario'] = _idUsuario;
       
-      console.log(`QUERY DE BUSCA: ${query}`);
-      const vagas = await Vaga.find(query).sort({ data_abertura: -1 });
+      console.log(`🔍 QUERY DE BUSCA:`, query);
+      
+      const vagas = await Vaga.find(query)
+        .sort({ data_abertura: -1 })
+        .lean(); // Para melhor performance
+      
+      console.log(`📋 Vagas encontradas: ${vagas.length}`);
+      
+      // Log para debug da estrutura das vagas
+      if (vagas.length > 0) {
+        console.log(`📊 Primeira vaga estrutura:`, {
+          codigo: vagas[0].codigo_vaga,
+          fase: vagas[0].fase_workflow,
+          status: vagas[0].status_aprovacao,
+          posicao: vagas[0].detalhe_vaga?.posicaoVaga,
+          temHistorico: vagas[0].historicovaga?.length || 0
+        });
+      }
+      
       return ApiResponse.success(res, 200, 'Vagas recuperadas com sucesso.', vagas);
     } catch (error) {
+      console.error('❌ Erro ao buscar vagas:', error);
       next(error);
     }
   }
@@ -134,7 +170,21 @@ class VagaController {
   async atualizarFaseVaga(req, res, next) {
     try {
       const { codigo_vaga } = req.params;
-      const { fase_workflow, updatedAtName, contratado_nome, motivo_congelamento, motivo_cancelamento } = req.body;
+      const { 
+        fase_workflow, 
+        updatedAtName, 
+        contratado_nome, 
+        contratado_telefone,
+        contratado_email,
+        contratado_rg,
+        contratado_cpf,
+        contratado_admissao,
+        contratado_treinamento,
+        contratado_hierarquia,
+        tem_treinamento,
+        motivo_congelamento, 
+        motivo_cancelamento 
+      } = req.body;
 
       if (!codigo_vaga) {
         return ApiResponse.badRequest(res, 'Código da vaga (codigo_vaga) é obrigatório.');
@@ -146,46 +196,94 @@ class VagaController {
         return ApiResponse.badRequest(res, 'Usuário (updatedAtName) é obrigatório para realizar atualização.');
       }
 
-      // Prepara os campos para atualização
-      const updateFields = {
-        fase_workflow,
-        updatedAtName,
-        updatedAt: new Date().toISOString(),
+      // Buscar a vaga
+      const vaga = await Vaga.findOne({ codigo_vaga });
+      if (!vaga) {
+        return ApiResponse.notFound(res, 'Vaga não encontrada.');
+      }
+
+      // Atualizar fase e usuário responsável
+      vaga.fase_workflow = fase_workflow;
+      vaga.updatedAtName = updatedAtName;
+
+      // Preparar evento para histórico
+      let eventoHistorico = {
+        usuario_responsavel: updatedAtName
       };
 
-      // Adiciona campos específicos baseados na fase
+      // Processar baseado na fase
       if (fase_workflow === 'Finalizada') {
         if (!contratado_nome) {
           return ApiResponse.badRequest(res, 'Nome do contratado é obrigatório para finalizar a vaga.');
         }
-        updateFields.contratado_nome = contratado_nome;
-        updateFields.data_finalizacao = new Date();
+
+        // Adicionar ao histórico com estrutura similar ao JSON de exemplo
+        eventoHistorico = {
+          contratado_nome,
+          telefone: contratado_telefone,
+          email: contratado_email,
+          rg: contratado_rg,
+          cpf: contratado_cpf,
+          data_admissao: contratado_admissao,
+          hierarquia: contratado_hierarquia,
+          treinamento: {
+            provisionado: tem_treinamento || false,
+            data_treinamento: tem_treinamento ? contratado_treinamento : null
+          },
+          data_finalizacao: new Date(),
+          usuario_responsavel: updatedAtName
+        };
+
+        // Atualizar campos de controle rápido
+        vaga.contratado_nome = contratado_nome;
+        vaga.contratado_telefone = contratado_telefone;
+        vaga.contratado_email = contratado_email;
+        vaga.contratado_rg = contratado_rg;
+        vaga.contratado_cpf = contratado_cpf;
+        vaga.contratado_admissao = contratado_admissao;
+        vaga.contratado_treinamento = tem_treinamento ? contratado_treinamento : null;
+        vaga.contratado_hierarquia = contratado_hierarquia;
+        vaga.tem_treinamento = tem_treinamento;
+        vaga.data_finalizacao = new Date();
+
       } else if (fase_workflow === 'Congelada') {
         if (!motivo_congelamento) {
           return ApiResponse.badRequest(res, 'Motivo do congelamento é obrigatório para congelar a vaga.');
         }
-        updateFields.motivo_congelamento = motivo_congelamento;
-        updateFields.data_congelamento = new Date();
+
+        eventoHistorico = {
+          data_congelamento: new Date(),
+          motivo_congelamento,
+          usuario_responsavel: updatedAtName
+        };
+
+        vaga.motivo_congelamento = motivo_congelamento;
+        vaga.data_congelamento = new Date();
+
       } else if (fase_workflow === 'Cancelada') {
         if (!motivo_cancelamento) {
           return ApiResponse.badRequest(res, 'Motivo do cancelamento é obrigatório para cancelar a vaga.');
         }
-        updateFields.motivo_cancelamento = motivo_cancelamento;
-        updateFields.data_cancelamento = new Date();
+
+        eventoHistorico = {
+          data_cancelamento: new Date(),
+          motivo_cancelamento,
+          usuario_responsavel: updatedAtName
+        };
+
+        vaga.motivo_cancelamento = motivo_cancelamento;
+        vaga.data_cancelamento = new Date();
       }
 
-      const vagaAtualizada = await Vaga.findOneAndUpdate(
-        { codigo_vaga },
-        { $set: updateFields },
-        { new: true }
-      );
+      // Adicionar evento ao histórico
+      vaga.historicovaga.push(eventoHistorico);
 
-      if (!vagaAtualizada) {
-        return ApiResponse.notFound(res, 'Vaga não encontrada.');
-      }
+      // Salvar a vaga
+      const vagaAtualizada = await vaga.save();
 
       return ApiResponse.success(res, 200, 'Fase da vaga atualizada com sucesso.', vagaAtualizada);
     } catch (error) {
+      console.error('Erro ao atualizar fase da vaga:', error);
       next(error);
     }
   }

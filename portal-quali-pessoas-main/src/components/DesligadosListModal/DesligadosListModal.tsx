@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -25,8 +25,10 @@ import {
   FileDownload, 
   Email, 
   Search,
-  Refresh
+  Refresh,
+  Send
 } from '@mui/icons-material';
+import { useDesligados, type EmailData } from '../../hooks/useDesligados';
 
 interface DesligadoRelatorio {
   'MatrÍcula': string;
@@ -69,11 +71,33 @@ const DesligadosListModal: React.FC<DesligadosListModalProps> = ({
     dataFim: new Date().toISOString().split('T')[0]
   });
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [emailData, setEmailData] = useState({
     titulo: `DESATIVAR ACESSOS - DESLIGAMENTOS: ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}`,
     remetente: '',
-    destinatarios: ''
+    destinatarios: '',
+    corpo: ''
   });
+
+  const { enviarRelatorioEmail } = useDesligados();
+
+  // Gerar corpo do email automaticamente quando os dados mudam
+  const gerarCorpoEmail = useCallback(() => {
+    if (desligados.length === 0) return '';
+    
+    return `${emailData.titulo}
+
+Segue lista de funcionários desligados no período de ${new Date(filtros.dataInicio).toLocaleDateString('pt-BR')} a ${new Date(filtros.dataFim).toLocaleDateString('pt-BR')}:
+
+${desligados.map((desligado, index) => 
+  `${index + 1}. ${desligado.Nome} - Matrícula: ${desligado['MatrÍcula']} - Data Desligamento: ${desligado['Data de Desligamento']}`
+).join('\n')}
+
+Total de desligamentos: ${desligados.length}
+
+Atenciosamente,
+${emailData.remetente}`;
+  }, [desligados, filtros.dataInicio, filtros.dataFim, emailData.titulo, emailData.remetente]);
 
   const buscarDesligados = async () => {
     setLoading(true);
@@ -136,29 +160,45 @@ const DesligadosListModal: React.FC<DesligadosListModalProps> = ({
       alert('Não há dados para enviar por email');
       return;
     }
+    
+    // Gerar o corpo do email automaticamente
+    const corpoGerado = gerarCorpoEmail();
+    setEmailData(prev => ({ ...prev, corpo: corpoGerado }));
     setShowEmailModal(true);
   };
 
-  const enviarEmail = () => {
-    const corpoEmail = `
-${emailData.titulo}
+  const enviarEmail = async () => {
+    if (!emailData.remetente || !emailData.destinatarios || !emailData.titulo) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
 
-Segue lista de funcionários desligados no período de ${new Date(filtros.dataInicio).toLocaleDateString('pt-BR')} a ${new Date(filtros.dataFim).toLocaleDateString('pt-BR')}:
+    setEmailLoading(true);
+    
+    try {
+      const emailPayload: EmailData = {
+        titulo: emailData.titulo,
+        remetente: emailData.remetente,
+        destinatarios: emailData.destinatarios,
+        corpo: emailData.corpo,
+        dataInicio: filtros.dataInicio,
+        dataFim: filtros.dataFim
+      };
 
-${desligados.map((desligado, index) => 
-  `${index + 1}. ${desligado.Nome} - Matrícula: ${desligado['MatrÍcula']} - Data Desligamento: ${desligado['Data de Desligamento']}`
-).join('\n')}
-
-Total de desligamentos: ${desligados.length}
-
-Atenciosamente,
-${emailData.remetente}
-    `.trim();
-
-    navigator.clipboard.writeText(corpoEmail).then(() => {
-      alert('Conteúdo do email copiado para área de transferência!');
-      setShowEmailModal(false);
-    });
+      const resultado = await enviarRelatorioEmail(emailPayload);
+      
+      if (resultado.success) {
+        alert(`Email enviado com sucesso! ${resultado.message}`);
+        setShowEmailModal(false);
+      } else {
+        alert(`Erro ao enviar email: ${resultado.message}`);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      alert(`Erro ao enviar email: ${errorMessage}`);
+    } finally {
+      setEmailLoading(false);
+    }
   };
 
   const EmailModal = () => (
@@ -172,44 +212,81 @@ ${emailData.remetente}
         </Box>
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <TextField
-            fullWidth
-            label="Título do Email"
-            value={emailData.titulo}
-            onChange={(e) => setEmailData({ ...emailData, titulo: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            label="Remetente"
-            value={emailData.remetente}
-            onChange={(e) => setEmailData({ ...emailData, remetente: e.target.value })}
-            placeholder="Seu nome"
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Destinatários (separados por vírgula)"
-            value={emailData.destinatarios}
-            onChange={(e) => setEmailData({ ...emailData, destinatarios: e.target.value })}
-            placeholder="email1@exemplo.com, email2@exemplo.com"
-          />
-          <Alert severity="info">
-            <Typography variant="body2">
-              O conteúdo do email será copiado para sua área de transferência. 
-              Você pode então colar em seu cliente de email preferido.
-            </Typography>
-          </Alert>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-          <Button variant="outlined" onClick={() => setShowEmailModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="contained" onClick={enviarEmail} disabled={!emailData.remetente}>
-            Copiar Conteúdo
-          </Button>
-        </Box>
+        <form onSubmit={(e) => { e.preventDefault(); enviarEmail(); }} noValidate>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              fullWidth
+              id="email-titulo"
+              name="emailTitulo"
+              label="Título do Email *"
+              value={emailData.titulo}
+              onChange={(e) => setEmailData(prev => ({ ...prev, titulo: e.target.value }))}
+              required
+              autoComplete="off"
+            />
+            <TextField
+              fullWidth
+              id="email-remetente"
+              name="emailRemetente"
+              label="Remetente *"
+              value={emailData.remetente}
+              onChange={(e) => setEmailData(prev => ({ ...prev, remetente: e.target.value }))}
+              placeholder="Seu nome"
+              required
+              autoComplete="name"
+            />
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              id="email-destinatarios"
+              name="emailDestinatarios"
+              label="Destinatários * (separados por vírgula)"
+              value={emailData.destinatarios}
+              onChange={(e) => setEmailData(prev => ({ ...prev, destinatarios: e.target.value }))}
+              placeholder="email1@exemplo.com, email2@exemplo.com"
+              required
+              autoComplete="email"
+            />
+            <TextField
+              fullWidth
+              multiline
+              rows={8}
+              id="email-corpo"
+              name="emailCorpo"
+              label="Corpo do Email"
+              value={emailData.corpo}
+              onChange={(e) => setEmailData(prev => ({ ...prev, corpo: e.target.value }))}
+              placeholder="O conteúdo do email será gerado automaticamente..."
+              autoComplete="off"
+            />
+            <Alert severity="info">
+              <Typography variant="body2">
+                O email será enviado diretamente para os destinatários especificados.
+                Verifique todos os dados antes de enviar.
+              </Typography>
+            </Alert>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+            <Button 
+              type="button"
+              variant="outlined" 
+              onClick={() => setShowEmailModal(false)}
+              disabled={emailLoading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit"
+              variant="contained" 
+              disabled={!emailData.remetente || !emailData.destinatarios || !emailData.titulo || emailLoading}
+              startIcon={emailLoading ? <CircularProgress size={20} /> : <Send />}
+              color="primary"
+            >
+              {emailLoading ? 'Enviando...' : 'Enviar Email'}
+            </Button>
+          </Box>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -236,20 +313,26 @@ ${emailData.remetente}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
+              id="filtro-data-inicio"
+              name="filtroDataInicio"
               label="Data Início"
               type="date"
               value={filtros.dataInicio}
               onChange={(e) => setFiltros({ ...filtros, dataInicio: e.target.value })}
               InputLabelProps={{ shrink: true }}
               size="small"
+              autoComplete="off"
             />
             <TextField
+              id="filtro-data-fim"
+              name="filtroDataFim"
               label="Data Fim"
               type="date"
               value={filtros.dataFim}
               onChange={(e) => setFiltros({ ...filtros, dataFim: e.target.value })}
               InputLabelProps={{ shrink: true }}
               size="small"
+              autoComplete="off"
             />
             <Button
               variant="contained"
