@@ -34,7 +34,7 @@ const BulkVacancyUploadModal: React.FC<BulkVacancyUploadModalProps> = ({
   onClose,
   onVagasCriadas
 }) => {
-  const [step, setStep] = useState<'upload' | 'review' | 'success'>('upload');
+  const [step, setStep] = useState<'upload' | 'review' | 'success' | 'cancel' | ''>('upload');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [existingEmployees, setExistingEmployees] = useState<ExistingEmployee[]>([]);
   const [newEmployees, setNewEmployees] = useState<Desligado[]>([]);
@@ -346,8 +346,11 @@ const BulkVacancyUploadModal: React.FC<BulkVacancyUploadModalProps> = ({
       )}
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+         <Button variant="outlined" onClick={() => setStep('cancel')}>
+          Cancelar Upload
+        </Button>
         <Button variant="outlined" onClick={() => setStep('upload')}>
-          Voltar
+          Carregar Desligados
         </Button>
         <Button 
           variant="contained" 

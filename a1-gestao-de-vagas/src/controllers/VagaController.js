@@ -192,7 +192,11 @@ class VagaController {
 
   async criarVagasEmLote(req, res, next) {
     try {
-      const { desligados } = req.body;
+      const { desligados, usuarioLogado } = req.body;
+      
+      console.log('VagaController - Dados recebidos no criarVagasEmLote:');
+      console.log('- desligados:', desligados?.length || 0, 'itens');
+      console.log('- usuarioLogado:', usuarioLogado);
       
       if (!desligados || !Array.isArray(desligados)) {
         return ApiResponse.badRequest(res, 'desligados deve ser um array válido.');
@@ -205,11 +209,18 @@ class VagaController {
       // Importar DesligadoService para criar vagas
       const DesligadoService = require('../services/DesligadoService');
       
-      // Obter dados do usuário logado (se disponível)
-      const usuarioLogado = req.user || req.body.usuario || null;
+      // Obter dados do usuário logado com fallback para diferentes estruturas
+      const usuario = usuarioLogado || req.user || req.body.usuario || null;
+      
+      console.log('VagaController - Usuário final para processamento:', usuario);
       
       // Criar vagas automaticamente
-      const resultado = await DesligadoService.criarVagasAutomaticas(desligados, usuarioLogado);
+      const resultado = await DesligadoService.criarVagasAutomaticas(desligados, usuario);
+      
+      console.log('VagaController - Resultado da criação:', {
+        vagasCriadas: resultado.vagasCriadas?.length || 0,
+        erros: resultado.erros?.length || 0
+      });
       
       if (resultado.vagasCriadas.length === 0) {
         return ApiResponse.badRequest(res, 'Nenhuma vaga foi criada.', {

@@ -46,15 +46,23 @@ class DesligadoService {
           
           if (existente) {
             resultados.duplicatas.push({
-              desligado,
-              existente: existente.toObject()
+              //desligado,
+              idContratado: desligado.idContratado,
+              nomeCompleto: desligado.nomeCompleto,
+              dataInclusaoAnterior: existente.dataInclusao
+              //existente: existente.toObject()
             });
             resultados.estatisticas.duplicatas++;
             continue;
           }
 
           // Criar novo registro
-          const novoDesligado = new Desligado(desligado);
+          const novoDesligado = new Desligado({
+            ...desligado,
+            dataInclusao: new Date(),
+            usuarioInclusao: usuarioValidado.id
+          });//Desligado(desligado);
+
           await novoDesligado.save();
 
           resultados.sucessos.push(novoDesligado.toObject());
@@ -79,7 +87,7 @@ class DesligadoService {
   /**
    * Criar vagas automaticamente baseadas nos desligados
    */
-  async criarVagasAutomaticas(desligados, usuarioLogado = null) {
+  async criarVagasAutomaticas(desligados, usuarioLogado) {
     try {
       // Validar e normalizar dados do usuário
       const usuarioValidado = this.validarUsuarioLogado(usuarioLogado);
@@ -129,21 +137,25 @@ class DesligadoService {
    * Validar e normalizar dados do usuário logado
    */
   validarUsuarioLogado(usuarioLogado) {
-    console.log('Validando usuário logado:', usuarioLogado);
+    console.log('=== VALIDAÇÃO DO USUÁRIO LOGADO ===');
+    console.log('1. Usuário recebido:', JSON.stringify(usuarioLogado, null, 2));
     
     if (!usuarioLogado) {
-      console.warn('Usuário logado não fornecido, usando dados padrão do sistema');
-      return {
+      console.warn('⚠️ Usuário logado não fornecido, usando dados padrão do sistema');
+      const defaultUser = {
         id: 'SISTEMA',
         nome: 'Sistema - Importação em Lote',
         cargo: 'Sistema',
         setor: 'Sistema',
         email: 'sistema@empresa.com'
       };
+      console.log('2. Usuário padrão criado:', defaultUser);
+      return defaultUser;
     }
 
     // Se o usuário já está no formato correto
     if (usuarioLogado.id && usuarioLogado.nome) {
+      console.log('✅ Usuário já está no formato correto');
       return usuarioLogado;
     }
 
@@ -151,12 +163,29 @@ class DesligadoService {
     let usuario = {
       id: usuarioLogado.id || usuarioLogado._id || usuarioLogado.id_apdata || 'SISTEMA',
       nome: usuarioLogado.nome || usuarioLogado.nomeCompleto || usuarioLogado.name || 'Sistema - Importação em Lote',
-      cargo: usuarioLogado.cargo || usuarioLogado.position || 'Sistema',
-      setor: usuarioLogado.setor || usuarioLogado.department || 'Sistema',
-      email: usuarioLogado.email || usuarioLogado.e_mail || 'sistema@empresa.com'
+      cargo: usuarioLogado.cargo || usuarioLogado.position || usuarioLogado.funcao || 'Sistema',
+      setor: usuarioLogado.setor || usuarioLogado.department || usuarioLogado.departamento || 'Sistema',
+      email: usuarioLogado.email || usuarioLogado.e_mail || usuarioLogado.mail || 'sistema@empresa.com'
     };
 
-    console.log('Usuário normalizado:', usuario);
+    console.log('2. Usuário normalizado:', usuario);
+    
+    // Validações adicionais
+    const validations = [
+      { field: 'id', value: usuario.id, valid: !!usuario.id && usuario.id !== 'SISTEMA' },
+      { field: 'nome', value: usuario.nome, valid: !!usuario.nome && usuario.nome !== 'Sistema - Importação em Lote' },
+      { field: 'cargo', value: usuario.cargo, valid: !!usuario.cargo },
+      { field: 'setor', value: usuario.setor, valid: !!usuario.setor },
+      { field: 'email', value: usuario.email, valid: !!usuario.email }
+    ];
+    
+    console.log('3. Validações dos campos:');
+    validations.forEach(validation => {
+      const status = validation.valid ? '✅' : '⚠️';
+      console.log(`   ${status} ${validation.field}: ${validation.value}`);
+    });
+    
+    console.log('=== FIM DA VALIDAÇÃO ===');
     return usuario;
   }
 

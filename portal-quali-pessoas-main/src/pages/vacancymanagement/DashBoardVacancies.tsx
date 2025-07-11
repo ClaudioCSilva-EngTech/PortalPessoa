@@ -9,6 +9,7 @@ import FormNewVacancy from "./FormNewVacancy";
 import FinalizarVagaModal from "../../components/FinalizarVagaModal/FinalizarVagaModal";
 import MotivoVagaModal from "../../components/MotivoVagaModal/MotivoVagaModal";
 import BulkVacancyUploadModal from "../../components/BulkVacancyUploadModal/BulkVacancyUploadModal";
+import VagaStatusInfo from "../../components/VagaStatusInfo/VagaStatusInfo";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 
 // "Rascunho", "Pendente de aprovação", "Recusada", "Aprovada", "Em Contratação"
@@ -147,16 +148,16 @@ const DashBoardVacancies: React.FC = () => {
     const handleBulkVagasCriadas = async (vagas: any[]): Promise<void> => {
         console.log('� Iniciando atualização do kanban com vagas em lote');
         console.log('📊 Vagas recebidas:', vagas.length);
-        console.log('📋 Estrutura das vagas recebidas:', vagas.map(v => ({ 
-            id: v._id, 
-            codigo: v.codigo_vaga, 
-            fase_workflow: v.fase_workflow, 
+        console.log('📋 Estrutura das vagas recebidas:', vagas.map(v => ({
+            id: v._id,
+            codigo: v.codigo_vaga,
+            fase_workflow: v.fase_workflow,
             status_aprovacao: v.status_aprovacao,
             rascunho: v.rascunho,
             posicao: v.detalhe_vaga?.posicaoVaga,
             solicitante: v.solicitante
         })));
-        
+
         if (!Array.isArray(vagas) || vagas.length === 0) {
             console.warn('⚠️ Nenhuma vaga válida recebida para atualização do kanban');
             return;
@@ -165,29 +166,29 @@ const DashBoardVacancies: React.FC = () => {
         // Atualizar kanban em uma única operação para evitar condições de corrida
         setKanban(prevKanban => {
             const newKanban = { ...prevKanban };
-            
+
             // Garantir que todas as colunas existam
             KANBAN_STATUS.forEach(status => {
                 if (!newKanban[status]) {
                     newKanban[status] = [];
                 }
             });
-            
+
             // Processar todas as vagas de uma vez
             vagas.forEach(vaga => {
                 console.log(`� Processando vaga ${vaga.codigo_vaga || vaga._id}...`);
-                
+
                 // Determinar status da vaga
                 const vagaStatus = vaga.fase_workflow && KANBAN_STATUS.includes(vaga.fase_workflow)
                     ? vaga.fase_workflow
                     : getStatus(vaga);
-                
+
                 console.log(`📋 Status determinado: ${vagaStatus}`);
-                
+
                 // Verificar se a vaga já existe em qualquer coluna para evitar duplicatas
                 let vagaExiste = false;
                 for (const col of KANBAN_STATUS) {
-                    if (newKanban[col]?.some(v => 
+                    if (newKanban[col]?.some(v =>
                         v._id === vaga._id || v.codigo_vaga === vaga.codigo_vaga
                     )) {
                         vagaExiste = true;
@@ -195,7 +196,7 @@ const DashBoardVacancies: React.FC = () => {
                         break;
                     }
                 }
-                
+
                 // Adicionar apenas se não existir
                 if (!vagaExiste) {
                     if (!newKanban[vagaStatus]) {
@@ -207,17 +208,17 @@ const DashBoardVacancies: React.FC = () => {
                     console.log(`⏭️ Pulando vaga ${vaga.codigo_vaga} - já existe no kanban`);
                 }
             });
-            
+
             console.log('📊 Estado final do kanban:', Object.keys(newKanban).map(status => ({
                 status,
                 count: newKanban[status]?.length || 0
             })));
-            
+
             return newKanban;
         });
-        
+
         console.log('✅ Kanban atualizado com sucesso!');
-        
+
         // Opcional: recarregar do backend para garantir sincronização completa
         // Aguardar um momento e então recarregar silenciosamente
         setTimeout(() => {
@@ -245,7 +246,7 @@ const DashBoardVacancies: React.FC = () => {
                 ...kanban,
                 [sourceStatus]: sourceList
             });
-            
+
             // Abrir modal de finalização
             setDraggedVaga(movedVaga);
             setPendingMove({
@@ -266,7 +267,7 @@ const DashBoardVacancies: React.FC = () => {
                 ...kanban,
                 [sourceStatus]: sourceList
             });
-            
+
             // Abrir modal de motivo
             setDraggedVaga(movedVaga);
             setPendingMove({
@@ -288,7 +289,7 @@ const DashBoardVacancies: React.FC = () => {
                 ...kanban,
                 [sourceStatus]: sourceList
             });
-            
+
             // Abrir modal de motivo
             setDraggedVaga(movedVaga);
             setPendingMove({
@@ -313,7 +314,7 @@ const DashBoardVacancies: React.FC = () => {
             [sourceStatus]: sourceList,
             [destStatus]: destList
         });
-        
+
         // Atualizar no backend
         await ApiServiceVaga.atualizarFaseVaga(movedVaga.codigo_vaga, destStatus);
     };
@@ -336,7 +337,7 @@ const DashBoardVacancies: React.FC = () => {
             const sourceList = Array.from(kanban[sourceStatus]);
             const destList = Array.from(kanban[destStatus]);
             const vagaIndex = sourceList.findIndex(v => v.codigo_vaga === vaga.codigo_vaga);
-            
+
             if (vagaIndex !== -1) {
                 const [movedVaga] = sourceList.splice(vagaIndex, 1);
                 movedVaga.fase_workflow = destStatus;
@@ -368,7 +369,7 @@ const DashBoardVacancies: React.FC = () => {
 
         try {
             // Preparar dados baseados no tipo
-            const dadosAdicionais = motivoTipo === 'congelar' 
+            const dadosAdicionais = motivoTipo === 'congelar'
                 ? { motivo_congelamento: motivo }
                 : { motivo_cancelamento: motivo };
 
@@ -383,11 +384,11 @@ const DashBoardVacancies: React.FC = () => {
             const sourceList = Array.from(kanban[sourceStatus]);
             const destList = Array.from(kanban[destStatus]);
             const vagaIndex = sourceList.findIndex(v => v.codigo_vaga === vaga.codigo_vaga);
-            
+
             if (vagaIndex !== -1) {
                 const [movedVaga] = sourceList.splice(vagaIndex, 1);
                 movedVaga.fase_workflow = destStatus;
-                
+
                 if (motivoTipo === 'congelar') {
                     movedVaga.motivo_congelamento = motivo;
                     movedVaga.data_congelamento = new Date();
@@ -395,7 +396,7 @@ const DashBoardVacancies: React.FC = () => {
                     movedVaga.motivo_cancelamento = motivo;
                     movedVaga.data_cancelamento = new Date();
                 }
-                
+
                 destList.splice(destIndex, 0, movedVaga);
 
                 setKanban({
@@ -485,61 +486,70 @@ const DashBoardVacancies: React.FC = () => {
             <DialogContent sx={{ pt: 0 }}>
                 {selectedVaga && (
                     <Box sx={{ mt: 2 }}>
-                        <Grid container spacing={2}>
-                            <Grid>
+                        {/* Informações específicas do status da vaga */}
+                        <VagaStatusInfo vaga={selectedVaga} />
+                        
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 2 }}>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Código da Vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.codigo_vaga}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Solicitante</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.solicitante}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Data de abertura</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.data_abertura ? new Date(selectedVaga.data_abertura).toLocaleDateString() : ""}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Status de aprovação</Typography>
                                 <Chip
                                     label={getStatus(selectedVaga)}
                                     sx={{
-                                        border: `2px solid ${statusColors[getStatus(selectedVaga)]}`,
-                                        color: statusColors[getStatus(selectedVaga)],
+                                        border: `2px solid ${statusColors[getStatus(selectedVaga)] || '#bdbdbd'}`,
+                                        color: statusColors[getStatus(selectedVaga)] || '#757575',
                                         fontWeight: 700,
                                         bgcolor: "#fff",
                                         borderRadius: 2,
                                     }}
                                 />
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Posição da vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.posicaoVaga}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Setor</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.setor}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Motivo da contratação</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.motivoSolicitacao}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Tipo de contratação</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.tipoContratacao}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Empresa contratante</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.empresaContratante}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Detalhes da vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.requisitosVaga}</Typography>
-                            </Grid>
-                            <Grid>
+                            </Box>
+                            <Box>
                                 <Typography variant="subtitle2" color="text.secondary">Benefícios da vaga</Typography>
                                 <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.beneficiosVaga}</Typography>
-                            </Grid>
-                        </Grid>
+                            </Box>
+                            {selectedVaga.detalhe_vaga?.motivoAfastamento && (
+                                <Box sx={{ gridColumn: '1 / -1' }}>
+                                    <Typography variant="subtitle2" color="text.secondary">Motivo de Contratação ou Afastamento</Typography>
+                                    <Typography fontWeight={600}>{selectedVaga.detalhe_vaga?.motivoAfastamento}</Typography>
+                                </Box>
+                            )}
+                        </Box>
                     </Box>
                 )}
             </DialogContent>
