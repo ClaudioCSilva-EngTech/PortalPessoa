@@ -11,7 +11,13 @@
     "stop": "pm2 stop all",
     "restart": "pm2 restart all",
     "monit": "pm2 monit",
-    "list": "pm2 list"
+    "list": "pm2 list",
+    "test:mongo": "node test-mongodb-connection.js",
+    "test:mongo:dev": "NODE_ENV=development node test-mongodb-connection.js",
+    "test:mongo:hom": "NODE_ENV=homologation node test-mongodb-connection.js",
+    "test:mongo:prod": "NODE_ENV=production node test-mongodb-connection.js",
+    "test:mongo:noauth": "cp .env.development.noauth .env.development && NODE_ENV=development node test-mongodb-connection.js",
+    "setup:mongo": "setup-mongodb.bat"
   },
   "keywords": [],
   "author": "",

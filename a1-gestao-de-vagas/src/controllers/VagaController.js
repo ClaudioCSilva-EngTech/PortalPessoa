@@ -130,6 +130,108 @@ class VagaController {
       next(error);
     }
   }
+
+  async atualizarFaseVaga(req, res, next) {
+    try {
+      const { codigo_vaga } = req.params;
+      const { fase_workflow, updatedAtName, contratado_nome, motivo_congelamento, motivo_cancelamento } = req.body;
+
+      if (!codigo_vaga) {
+        return ApiResponse.badRequest(res, 'Código da vaga (codigo_vaga) é obrigatório.');
+      }
+      if (!fase_workflow) {
+        return ApiResponse.badRequest(res, 'Fase do workflow (fase_workflow) é obrigatória.');
+      }
+      if (!updatedAtName) {
+        return ApiResponse.badRequest(res, 'Usuário (updatedAtName) é obrigatório para realizar atualização.');
+      }
+
+      // Prepara os campos para atualização
+      const updateFields = {
+        fase_workflow,
+        updatedAtName,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Adiciona campos específicos baseados na fase
+      if (fase_workflow === 'Finalizada') {
+        if (!contratado_nome) {
+          return ApiResponse.badRequest(res, 'Nome do contratado é obrigatório para finalizar a vaga.');
+        }
+        updateFields.contratado_nome = contratado_nome;
+        updateFields.data_finalizacao = new Date();
+      } else if (fase_workflow === 'Congelada') {
+        if (!motivo_congelamento) {
+          return ApiResponse.badRequest(res, 'Motivo do congelamento é obrigatório para congelar a vaga.');
+        }
+        updateFields.motivo_congelamento = motivo_congelamento;
+        updateFields.data_congelamento = new Date();
+      } else if (fase_workflow === 'Cancelada') {
+        if (!motivo_cancelamento) {
+          return ApiResponse.badRequest(res, 'Motivo do cancelamento é obrigatório para cancelar a vaga.');
+        }
+        updateFields.motivo_cancelamento = motivo_cancelamento;
+        updateFields.data_cancelamento = new Date();
+      }
+
+      const vagaAtualizada = await Vaga.findOneAndUpdate(
+        { codigo_vaga },
+        { $set: updateFields },
+        { new: true }
+      );
+
+      if (!vagaAtualizada) {
+        return ApiResponse.notFound(res, 'Vaga não encontrada.');
+      }
+
+      return ApiResponse.success(res, 200, 'Fase da vaga atualizada com sucesso.', vagaAtualizada);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async criarVagasEmLote(req, res, next) {
+    try {
+      const { desligados } = req.body;
+      
+      if (!desligados || !Array.isArray(desligados)) {
+        return ApiResponse.badRequest(res, 'desligados deve ser um array válido.');
+      }
+
+      if (desligados.length === 0) {
+        return ApiResponse.badRequest(res, 'Array de desligados não pode estar vazio.');
+      }
+
+      // Importar DesligadoService para criar vagas
+      const DesligadoService = require('../services/DesligadoService');
+      
+      // Obter dados do usuário logado (se disponível)
+      const usuarioLogado = req.user || req.body.usuario || null;
+      
+      // Criar vagas automaticamente
+      const resultado = await DesligadoService.criarVagasAutomaticas(desligados, usuarioLogado);
+      
+      if (resultado.vagasCriadas.length === 0) {
+        return ApiResponse.badRequest(res, 'Nenhuma vaga foi criada.', {
+          vagasCriadas: resultado.vagasCriadas,
+          erros: resultado.erros
+        });
+      }
+
+      return ApiResponse.success(res, 201, 
+        `${resultado.vagasCriadas.length} vaga(s) criada(s) com sucesso.`, 
+        {
+          vagas: resultado.vagasCriadas,
+          erros: resultado.erros,
+          total: resultado.vagasCriadas.length
+        }
+      );
+
+    } catch (error) {
+      console.error('Erro ao criar vagas em lote:', error);
+      next(error);
+    }
+  }
 }
 
 module.exports = new VagaController();

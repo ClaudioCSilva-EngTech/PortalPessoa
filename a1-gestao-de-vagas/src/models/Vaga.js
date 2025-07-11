@@ -55,7 +55,14 @@ const vagaSchema = new mongoose.Schema({
   data_abertura: { type: Date, default: Date.now },
   aprovador: [aprovadorSchema],
   detalhe_vaga: { type: detalheVagaSchema, required: true },
-  updatedAtName: { type: String, default: false }
+  updatedAtName: { type: String, default: false },
+  // Novos campos para controle de fases
+  contratado_nome: { type: String }, // Nome do contratado quando finalizada
+  data_finalizacao: { type: Date }, // Data quando foi finalizada
+  motivo_congelamento: { type: String }, // Motivo quando congelada
+  data_congelamento: { type: Date }, // Data quando foi congelada
+  motivo_cancelamento: { type: String }, // Motivo quando cancelada
+  data_cancelamento: { type: Date } // Data quando foi cancelada
 }, {
   timestamps: true // Adiciona createdAt e updatedAt automaticamente
 });

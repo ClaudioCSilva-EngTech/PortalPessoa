@@ -118,6 +118,65 @@ class ApiServiceVaga {
     });
     return response.json();
   }
+
+  // Atualizar fase da vaga com dados adicionais
+  static async atualizarFaseVagaComDados(
+    codigo_vaga: string,
+    fase_workflow: string,
+    dadosAdicionais?: {
+      contratado_nome?: string;
+      motivo_congelamento?: string;
+      motivo_cancelamento?: string;
+    },
+    updatedAtName?: string
+  ): Promise<VagaResponse> {
+    // Recupera user e updatedAtName do sessionStorage se não forem passados
+    let userName = updatedAtName;    
+      try {
+        const userStr = sessionStorage.getItem('user');
+        const userObj = userStr ? JSON.parse(userStr) : {};
+        userName = userName || userObj?.data?.detalhes?.nome;
+      } catch {
+        // fallback: não faz nada
+      }    
+    const body = {
+      fase_workflow,
+      updatedAtName: userName,
+      ...dadosAdicionais
+    };
+
+    const response = await fetch(`${API_BASE}/vagas/${codigo_vaga}/fase`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body),
+    });
+    return response.json();
+  }
+  // Criar vagas em lote baseadas em funcionários desligados
+  static async criarVagasEmLote(desligados: any[]): Promise<{
+    success: boolean;
+    message?: string;
+    data?: {
+      vagas?: any[];
+      vagasCriadas?: any[];
+      totalProcessados?: number;
+    };
+  }> {
+    const response = await fetch(`${API_BASE}/vagas/lote`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        desligados: desligados
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new window.Error(`Erro na API: ${response.status} ${response.statusText}`);
+    }
+    
+    return response.json();
+  }
+
 }
 
 export default ApiServiceVaga;

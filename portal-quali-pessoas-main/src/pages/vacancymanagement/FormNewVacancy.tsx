@@ -279,7 +279,7 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
           solicitante: currentUser?.data.detalhes.nome || "",
           cargo_solicitante: currentUser?.data.detalhes.cargo || "",
           status_aprovacao: true, // [Claudio Silva] --> Após definição de workflow de aprovação alterar esse ponto do código 
-          fase_workflow: "Aprovada",
+          fase_workflow: "Aberta",
           data_abertura: new Date().toISOString(),
           aprovador: aprovadores,
           detalhe_vaga: {
