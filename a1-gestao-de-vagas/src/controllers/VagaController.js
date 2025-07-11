@@ -183,7 +183,8 @@ class VagaController {
         contratado_hierarquia,
         tem_treinamento,
         motivo_congelamento, 
-        motivo_cancelamento 
+        motivo_cancelamento,
+        observacoes
       } = req.body;
 
       if (!codigo_vaga) {
@@ -231,7 +232,8 @@ class VagaController {
             data_treinamento: tem_treinamento ? contratado_treinamento : null
           },
           data_finalizacao: new Date(),
-          usuario_responsavel: updatedAtName
+          usuario_responsavel: updatedAtName,
+          observacoes: observacoes || null
         };
 
         // Atualizar campos de controle rápido

@@ -263,6 +263,7 @@ class ApiServiceVaga {
       tem_treinamento?: boolean;
       motivo_congelamento?: string;
       motivo_cancelamento?: string;
+      observacoes?: string;
     },
     updatedAtName?: string
   ): Promise<VagaResponse> {

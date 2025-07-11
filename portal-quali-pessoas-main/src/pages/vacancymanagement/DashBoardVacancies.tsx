@@ -358,6 +358,7 @@ const DashBoardVacancies: React.FC = () => {
         treinamento: string;
         hierarquia: string;
         temTreinamento: boolean;
+        observacoes?: string;
     }) => {
         if (!pendingMove) return;
 
@@ -377,7 +378,8 @@ const DashBoardVacancies: React.FC = () => {
                     contratado_admissao: dadosContratado.admissao,
                     contratado_treinamento: dadosContratado.temTreinamento ? dadosContratado.treinamento : null,
                     contratado_hierarquia: dadosContratado.hierarquia,
-                    tem_treinamento: dadosContratado.temTreinamento
+                    tem_treinamento: dadosContratado.temTreinamento,
+                    observacoes: dadosContratado.observacoes
                 }
             );
 

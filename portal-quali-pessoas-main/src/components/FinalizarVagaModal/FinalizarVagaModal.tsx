@@ -40,6 +40,7 @@ interface FinalizarVagaModalProps {
     treinamento: string;
     hierarquia: string;
     temTreinamento: boolean;
+    observacoes?: string;
   }) => Promise<void>;
   vaga: any;
 }
@@ -59,6 +60,7 @@ const FinalizarVagaModal: React.FC<FinalizarVagaModalProps> = ({
   const [contratadoTreinamento, setContratadoTreinamento] = useState('');
   const [contratadoHierarquia, setContratadoHierarquia] = useState('');
   const [temTreinamento, setTemTreinamento] = useState(true);
+  const [observacoes, setObservacoes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -142,7 +144,8 @@ const FinalizarVagaModal: React.FC<FinalizarVagaModalProps> = ({
         admissao: contratadoAdmissao,
         treinamento: temTreinamento ? contratadoTreinamento : '',
         hierarquia: contratadoHierarquia.trim(),
-        temTreinamento
+        temTreinamento,
+        observacoes: observacoes.trim() || undefined
       });
       handleClose();
     } catch {
@@ -163,6 +166,7 @@ const FinalizarVagaModal: React.FC<FinalizarVagaModalProps> = ({
     setContratadoTreinamento('');
     setContratadoHierarquia('');
     setTemTreinamento(true);
+    setObservacoes('');
     setErrors({});
     onClose();
   };
@@ -206,6 +210,9 @@ const FinalizarVagaModal: React.FC<FinalizarVagaModalProps> = ({
         break;
       case 'hierarquia':
         setContratadoHierarquia(value);
+        break;
+      case 'observacoes':
+        setObservacoes(value);
         break;
     }
     
@@ -380,6 +387,19 @@ const FinalizarVagaModal: React.FC<FinalizarVagaModalProps> = ({
               fullWidth
             />
           </Box>
+
+          {/* Campo de Observações - opcional */}
+          <TextField
+            label="Observações (opcional)"
+            value={observacoes}
+            onChange={(e) => handleFieldChange('observacoes', e.target.value)}
+            fullWidth
+            variant="outlined"
+            placeholder="Digite aqui observações adicionais sobre o contratado"
+            multiline
+            rows={4}
+            disabled={submitting}
+          />
         </Box>
 
         <Alert severity="info" sx={{ mt: 3 }}>
