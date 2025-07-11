@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
     Box, Button, Container, Dialog, DialogContent, DialogTitle, Divider, Grid, Typography, Paper, Avatar, Chip, IconButton
 } from "@mui/material";
-import { Add, Close, Upload } from "@mui/icons-material";
+import { Add, Close, Upload, List } from "@mui/icons-material";
 import ApiServiceVaga from "../../services/ApiServiceVaga";
 import "../../styles/DashBoardVacancies.scss";
 import FormNewVacancy from "./FormNewVacancy";
@@ -10,7 +10,9 @@ import FinalizarVagaModal from "../../components/FinalizarVagaModal/FinalizarVag
 import MotivoVagaModal from "../../components/MotivoVagaModal/MotivoVagaModal";
 import BulkVacancyUploadModal from "../../components/BulkVacancyUploadModal/BulkVacancyUploadModal";
 import VagaStatusInfo from "../../components/VagaStatusInfo/VagaStatusInfo";
+import DesligadosListModal from "../../components/DesligadosListModal/DesligadosListModal";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
+import { useAuth } from "../../context/AuthContext";
 
 // "Rascunho", "Pendente de aprovação", "Recusada", "Aprovada", "Em Contratação"
 const KANBAN_STATUS = [
@@ -48,12 +50,14 @@ const getStatus = (vaga: any) => {
 };
 
 const DashBoardVacancies: React.FC = () => {
+    const { user } = useAuth();
     const [kanban, setKanban] = useState<{ [key: string]: any[] }>({});
     const [openForm, setOpenForm] = useState(false);
     const [openDetail, setOpenDetail] = useState(false);
     const [openFinalizarModal, setOpenFinalizarModal] = useState(false);
     const [openMotivoModal, setOpenMotivoModal] = useState(false);
     const [openBulkUpload, setOpenBulkUpload] = useState(false);
+    const [openDesligadosList, setOpenDesligadosList] = useState(false);
     const [motivoTipo, setMotivoTipo] = useState<'congelar' | 'cancelar'>('congelar');
     const [selectedVaga, setSelectedVaga] = useState<any>(null);
     const [draggedVaga, setDraggedVaga] = useState<any>(null);
@@ -64,6 +68,11 @@ const DashBoardVacancies: React.FC = () => {
         sourceIndex: number;
         destIndex: number;
     } | null>(null);
+
+    // Verificar se o usuário é do Departamento Pessoal
+    const isDepartamentoPessoal = useMemo(() => {
+        return user?.data?.detalhes?.setor?.toUpperCase() === "DEPARTAMENTOPESSOAL";
+    }, [user]);
 
     // Memoize currentUser e isRH para evitar re-renderizações desnecessárias
     const currentUser = useMemo(() => {
@@ -560,17 +569,29 @@ const DashBoardVacancies: React.FC = () => {
         <Box className="dashboard-vacancies-bg">
             <Container maxWidth={false} disableGutters className="dashboard-main-container dashboard-kanban-container">
                 <Box className="dashboard-header">
-                    <Typography className="dashboard-title">Vagas Abertas</Typography>
+                    <Typography className="dashboard-title" sx={{ fontWeight: 'bold' }}>Vagas Abertas</Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            color="primary"
-                            startIcon={<Upload />}
-                            onClick={() => setOpenBulkUpload(true)}
-                            className="dashboard-btn-upload"
-                        >
-                            Upload em Lote
-                        </Button>
+                        {isDepartamentoPessoal && (
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                startIcon={<Upload />}
+                                onClick={() => setOpenBulkUpload(true)}
+                                className="dashboard-btn-upload"
+                            >
+                                Upload em Lote
+                            </Button>
+                        )}
+                        {isDepartamentoPessoal && (
+                            <Button
+                                variant="outlined"
+                                color="info"
+                                startIcon={<List />}
+                                onClick={() => setOpenDesligadosList(true)}
+                            >
+                                Relatório Desligados
+                            </Button>
+                        )}
                         <Button
                             variant="contained"
                             color="secondary"
@@ -666,12 +687,22 @@ const DashBoardVacancies: React.FC = () => {
                 tipo={motivoTipo}
             />
 
-            {/* Modal de Upload em Lote */}
-            <BulkVacancyUploadModal
-                open={openBulkUpload}
-                onClose={() => setOpenBulkUpload(false)}
-                onVagasCriadas={handleBulkVagasCriadas}
-            />
+            {/* Modal de Upload em Lote - Apenas para Departamento Pessoal */}
+            {isDepartamentoPessoal && (
+                <BulkVacancyUploadModal
+                    open={openBulkUpload}
+                    onClose={() => setOpenBulkUpload(false)}
+                    onVagasCriadas={handleBulkVagasCriadas}
+                />
+            )}
+
+            {/* Modal de Relatório de Desligados - Apenas para Departamento Pessoal */}
+            {isDepartamentoPessoal && (
+                <DesligadosListModal
+                    open={openDesligadosList}
+                    onClose={() => setOpenDesligadosList(false)}
+                />
+            )}
         </Box>
     );
 };

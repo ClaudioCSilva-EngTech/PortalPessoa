@@ -104,6 +104,7 @@ const DesligadoSchema = new mongoose.Schema({
 DesligadoSchema.index({ idContratado: 1 }, { unique: true });
 DesligadoSchema.index({ nomeCompleto: 1 }); // Busca por nome
 DesligadoSchema.index({ dataInclusao: -1 }); // Ordenação por data (mais recentes primeiro)
+DesligadoSchema.index({ dataRescisao: 1 }); // Busca por data de rescisão
 DesligadoSchema.index({ cargo: 1 }); // Busca por cargo
 DesligadoSchema.index({ centroCusto: 1 }); // Busca por centro de custo
 DesligadoSchema.index({ 'razaoSocialEmpresa': 1, 'centroCusto': 1 }); // Índice composto para empresa + setor

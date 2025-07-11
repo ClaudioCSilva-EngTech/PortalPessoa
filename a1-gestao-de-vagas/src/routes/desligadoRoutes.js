@@ -42,4 +42,11 @@ router.get('/:id', DesligadoController.buscarPorId);
  */
 router.get('/contratado/:idContratado', DesligadoController.buscarPorIdContratado);
 
+/**
+ * @route GET /desligados/relatorio/periodo
+ * @desc Buscar desligados por período para relatórios
+ * @access Private
+ */
+router.get('/relatorio/periodo', DesligadoController.buscarDesligadosPorData);
+
 module.exports = router;

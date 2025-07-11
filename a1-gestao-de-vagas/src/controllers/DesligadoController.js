@@ -164,6 +164,113 @@ class DesligadoController {
     }
   }
 
+  /**
+   * Buscar desligados por filtro de data para relatórios
+   */
+  async buscarDesligadosPorData(req, res, next) {
+    try {
+      const { dataInicio, dataFim, formato = 'json' } = req.query;
+
+      console.log('Buscar desligados por data:', { dataInicio, dataFim, formato });
+
+      if (!dataInicio || !dataFim) {
+        return ApiResponse.badRequest(res, 'dataInicio e dataFim são obrigatórios.');
+      }
+
+      // Função para converter data ISO (YYYY-MM-DD) para formato brasileiro (DD/MM/YYYY)
+      const formatToBrazilianDate = (isoDate) => {
+        const date = new Date(isoDate);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
+      // Função para converter data brasileira (DD/MM/YYYY) para Date para comparação
+      const parseFromBrazilianDate = (brazilianDate) => {
+        const [day, month, year] = brazilianDate.split('/');
+        return new Date(year, month - 1, day);
+      };
+
+      // Converter datas de entrada para formato brasileiro
+      const dataInicioBR = formatToBrazilianDate(dataInicio);
+      const dataFimBR = formatToBrazilianDate(dataFim);
+
+      console.log('Datas convertidas:', { dataInicioBR, dataFimBR });
+
+      // Buscar todos os desligados e filtrar por data no código
+      // Isso é necessário porque dataRescisao está armazenada como string no formato DD/MM/YYYY
+      const todosDesligados = await Desligado.find({ 
+        dataRescisao: { $exists: true, $ne: null, $ne: '' } 
+      }).lean();
+
+      console.log(`Total de desligados encontrados: ${todosDesligados.length}`);
+
+      // Filtrar por período de data
+      const inicio = new Date(dataInicio);
+      const fim = new Date(dataFim);
+      
+      const desligados = todosDesligados.filter(desligado => {
+        if (!desligado.dataRescisao) return false;
+        
+        try {
+          const dataRescisaoDate = parseFromBrazilianDate(desligado.dataRescisao);
+          return dataRescisaoDate >= inicio && dataRescisaoDate <= fim;
+        } catch (error) {
+          console.log(`Erro ao processar data: ${desligado.dataRescisao}`, error);
+          return false;
+        }
+      });
+
+      console.log(`Desligados filtrados por período: ${desligados.length}`);
+
+      // Ordenar por data de rescisão
+      desligados.sort((a, b) => {
+        const dateA = parseFromBrazilianDate(a.dataRescisao);
+        const dateB = parseFromBrazilianDate(b.dataRescisao);
+        return dateA - dateB;
+      });
+
+      // Se for solicitado formato Excel, formatar dados
+      if (formato === 'excel') {
+        const desligadosFormatados = desligados.map((desligado, index) => ({
+          'MatrÍcula': desligado.idContratado || '',
+          'Nome': desligado.nomeCompleto || '',
+          'Data de Desligamento': desligado.dataRescisao || '',
+          'Data de Admissão': desligado.dataAdmissao || '',
+          'Data de Pagamento': '', // Campo calculado ou vazio
+          'Data da Homologação': '', // Campo calculado ou vazio
+          'Tipo de Desligamento': desligado.situacao || '',
+          'Supervisor': '', // Vem da hierarquia
+          'Gerente': '', // Vem da hierarquia
+          'Departamento': desligado.hierarquia || desligado.centroCusto || '',
+          'Unidade': desligado.local || ''
+        }));
+
+        return ApiResponse.success(res, 200, 'Desligados formatados para Excel.', {
+          desligados: desligadosFormatados,
+          total: desligados.length,
+          periodo: {
+            inicio: dataInicioBR,
+            fim: dataFimBR
+          }
+        });
+      }
+
+      return ApiResponse.success(res, 200, 'Desligados encontrados.', {
+        desligados,
+        total: desligados.length,
+        periodo: {
+          inicio: dataInicioBR,
+          fim: dataFimBR
+        }
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  }
+
 }
 
 module.exports = new DesligadoController();

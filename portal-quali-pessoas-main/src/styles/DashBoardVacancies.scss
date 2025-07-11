@@ -1,4 +1,4 @@
-@use 'global.scss';
+@use "global.scss";
 
 // Fundo do dashboard
 .dashboard-vacancies-bg {
@@ -123,12 +123,25 @@
   border: 2px solid var(--color-border);
   font-size: 0.97em;
 
-  &.aprovada { border-color: var(--color-success); }
-  &.recusada { border-color: var(--color-danger); }
-  &.pendente-de-aprovação { border-color: var(--accent-color); }
-  &.rascunho { border-color: var(--color-grey); }
-  &.em-seleção, &.em-contratação { border-color: var(--color-accent); }
-  &.finalizada { border-color: var(--color-grey); }
+  &.aprovada {
+    border-color: var(--color-success);
+  }
+  &.recusada {
+    border-color: var(--color-danger);
+  }
+  &.pendente-de-aprovação {
+    border-color: var(--accent-color);
+  }
+  &.rascunho {
+    border-color: var(--color-grey);
+  }
+  &.em-seleção,
+  &.em-contratação {
+    border-color: var(--color-accent);
+  }
+  &.finalizada {
+    border-color: var(--color-grey);
+  }
 }
 
 // Avatar do card
@@ -170,12 +183,31 @@
   font-weight: 600 !important;
   margin-left: 8px !important;
 
-  &.aprovada { border-color: var(--color-success); color: var(--color-success) !important; }
-  &.recusada { border-color: var(--color-danger); color: var(--color-danger) !important; }
-  &.pendente-de-aprovação { border-color: var(--accent-color); color: var(--accent-color) !important; }
-  &.rascunho { border-color: var(--color-grey); color: var(--color-grey) !important; }
-  &.em-seleção, &.em-contratação { border-color: var(--color-accent); color: var(--color-accent) !important; }
-  &.finalizada { border-color: var(--color-grey); color: var(--color-grey) !important; }
+  &.aprovada {
+    border-color: var(--color-success);
+    color: var(--color-success) !important;
+  }
+  &.recusada {
+    border-color: var(--color-danger);
+    color: var(--color-danger) !important;
+  }
+  &.pendente-de-aprovação {
+    border-color: var(--accent-color);
+    color: var(--accent-color) !important;
+  }
+  &.rascunho {
+    border-color: var(--color-grey);
+    color: var(--color-grey) !important;
+  }
+  &.em-seleção,
+  &.em-contratação {
+    border-color: var(--color-accent);
+    color: var(--color-accent) !important;
+  }
+  &.finalizada {
+    border-color: var(--color-grey);
+    color: var(--color-grey) !important;
+  }
 }
 
 // Texto de coluna vazia
@@ -256,7 +288,8 @@
     color: var(--text-color) !important;
   }
   .dashboard-title {
-    font-size: 1.1em;
+    font-size: 1.1em !important;
+    font-weight: 700 !important;
   }
   .dashboard-kanban-row {
     min-width: 320px;
