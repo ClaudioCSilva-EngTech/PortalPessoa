@@ -31,7 +31,7 @@ class AuthService {
 
   async detalhesUsuarioLogado(token) {
     try {
-     
+     console.debug(`🔐 Verificando detalhes do usuário com token: ${token}`);
       const response = await axios.get(this.baseUrlDetalhes, {
         headers: {
           'Authorization': `Bearer ${token}`,

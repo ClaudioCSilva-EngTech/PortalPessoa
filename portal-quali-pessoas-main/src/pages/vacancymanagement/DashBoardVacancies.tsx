@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
     Box, Button, Container, Dialog, DialogContent, DialogTitle, Divider, Grid, Typography, Paper, Avatar, Chip, IconButton
 } from "@mui/material";
-import { Add, Close, Upload, List } from "@mui/icons-material";
+import { Add, Close, Upload, List, Assessment } from "@mui/icons-material";
 import ApiServiceVaga from "../../services/ApiServiceVaga";
 import "../../styles/DashBoardVacancies.scss";
 import FormNewVacancy from "./FormNewVacancy";
@@ -11,6 +11,7 @@ import MotivoVagaModal from "../../components/MotivoVagaModal/MotivoVagaModal";
 import BulkVacancyUploadModal from "../../components/BulkVacancyUploadModal/BulkVacancyUploadModal";
 import VagaStatusInfo from "../../components/VagaStatusInfo/VagaStatusInfo";
 import DesligadosListModal from "../../components/DesligadosListModal/DesligadosListModal";
+import RelatoriosModal from "../../components/RelatoriosModal/RelatoriosModal";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { useAuth } from "../../context/AuthContext";
 
@@ -67,6 +68,7 @@ const DashBoardVacancies: React.FC = () => {
     const [openMotivoModal, setOpenMotivoModal] = useState(false);
     const [openBulkUpload, setOpenBulkUpload] = useState(false);
     const [openDesligadosList, setOpenDesligadosList] = useState(false);
+    const [openRelatorios, setOpenRelatorios] = useState(false);
     const [motivoTipo, setMotivoTipo] = useState<'congelar' | 'cancelar'>('congelar');
     const [selectedVaga, setSelectedVaga] = useState<any>(null);
     const [draggedVaga, setDraggedVaga] = useState<any>(null);
@@ -648,6 +650,16 @@ const DashBoardVacancies: React.FC = () => {
                                 Relatório Desligados
                             </Button>
                         )}
+                        {isDepartamentoPessoal && (
+                            <Button
+                                variant="outlined"
+                                color="success"
+                                startIcon={<Assessment />}
+                                onClick={() => setOpenRelatorios(true)}
+                            >
+                                Relatórios
+                            </Button>
+                        )}
                         <Button
                             variant="contained"
                             color="secondary"
@@ -759,6 +771,14 @@ const DashBoardVacancies: React.FC = () => {
                 <DesligadosListModal
                     open={openDesligadosList}
                     onClose={() => setOpenDesligadosList(false)}
+                />
+            )}
+
+            {/* Modal de Relatórios - Apenas para Departamento Pessoal */}
+            {isDepartamentoPessoal && (
+                <RelatoriosModal
+                    open={openRelatorios}
+                    onClose={() => setOpenRelatorios(false)}
                 />
             )}
         </Box>

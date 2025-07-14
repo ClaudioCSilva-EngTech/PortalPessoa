@@ -2,6 +2,7 @@
 const Vaga = require('../models/Vaga');
 const ApiResponse = require('../utils/ApiResponse'); // Para padronizar respostas
 const WorkflowService = require('../services/WorkflowService'); // Para gerenciar o workflow
+const MailService = require('../services/MailService'); // Para envio de emails
 
 class VagaController {
   async criarVaga(req, res, next) {
@@ -341,6 +342,249 @@ class VagaController {
     } catch (error) {
       console.error('Erro ao criar vagas em lote:', error);
       next(error);
+    }
+  }
+
+  // Relatório de contratados por período
+  async relatorioContratados(req, res, next) {
+    try {
+      const { dataInicio, dataFim } = req.query;
+
+      if (!dataInicio || !dataFim) {
+        return ApiResponse.badRequest(res, 'Data de início e fim são obrigatórias.');
+      }
+
+      const startDate = new Date(dataInicio);
+      const endDate = new Date(dataFim);
+      endDate.setHours(23, 59, 59, 999); // Incluir o final do dia
+
+      console.log(`📊 Buscando contratados entre ${startDate.toISOString()} e ${endDate.toISOString()}`);
+
+      // Buscar vagas finalizadas no período
+      const vagas = await Vaga.find({
+        fase_workflow: 'Finalizada',
+        data_finalizacao: {
+          $gte: startDate,
+          $lte: endDate
+        },
+        contratado_nome: { $ne: null }
+      }).select({
+        codigo_vaga: 1,
+        contratado_nome: 1,
+        contratado_telefone: 1,
+        contratado_email: 1,
+        contratado_rg: 1,
+        contratado_cpf: 1,
+        contratado_admissao: 1,
+        contratado_hierarquia: 1,
+        tem_treinamento: 1,
+        contratado_treinamento: 1,
+        data_finalizacao: 1,
+        'detalhe_vaga.posicaoVaga': 1,
+        'detalhe_vaga.setor': 1,
+        solicitante: 1
+      }).lean();
+
+      const contratados = vagas.map(vaga => ({
+        codigo_vaga: vaga.codigo_vaga,
+        nome_contratado: vaga.contratado_nome,
+        telefone: vaga.contratado_telefone || '',
+        email: vaga.contratado_email || '',
+        rg: vaga.contratado_rg || '',
+        cpf: vaga.contratado_cpf || '',
+        data_admissao: vaga.contratado_admissao || '',
+        hierarquia: vaga.contratado_hierarquia || '',
+        tem_treinamento: vaga.tem_treinamento || false,
+        data_treinamento: vaga.contratado_treinamento || '',
+        data_finalizacao: vaga.data_finalizacao ? new Date(vaga.data_finalizacao).toLocaleDateString('pt-BR') : '',
+        posicao_vaga: vaga.detalhe_vaga?.posicaoVaga || '',
+        setor: vaga.detalhe_vaga?.setor || '',
+        solicitante: vaga.solicitante || ''
+      }));
+
+      console.log(`📋 Encontrados ${contratados.length} contratados no período`);
+
+      return ApiResponse.success(res, 200, 'Relatório de contratados gerado com sucesso.', { contratados });
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório de contratados:', error);
+      next(error);
+    }
+  }
+
+  // Relatório de vagas por período
+  async relatorioVagas(req, res, next) {
+    try {
+      const { dataInicio, dataFim, status } = req.query;
+
+      if (!dataInicio || !dataFim) {
+        return ApiResponse.badRequest(res, 'Data de início e fim são obrigatórias.');
+      }
+
+      const startDate = new Date(dataInicio);
+      const endDate = new Date(dataFim);
+      endDate.setHours(23, 59, 59, 999); // Incluir o final do dia
+
+      console.log(`📊 Buscando vagas entre ${startDate.toISOString()} e ${endDate.toISOString()}`);
+
+      // Construir query
+      const query = {
+        data_abertura: {
+          $gte: startDate,
+          $lte: endDate
+        }
+      };
+
+      // Filtrar por status se especificado
+      if (status && status !== 'todos') {
+        query.fase_workflow = status;
+      }
+
+      const vagas = await Vaga.find(query).select({
+        codigo_vaga: 1,
+        'detalhe_vaga.posicaoVaga': 1,
+        'detalhe_vaga.setor': 1,
+        'detalhe_vaga.motivoSolicitacao': 1,
+        'detalhe_vaga.tipoContratacao': 1,
+        'detalhe_vaga.urgenciaContratacao': 1,
+        solicitante: 1,
+        fase_workflow: 1,
+        data_abertura: 1,
+        data_finalizacao: 1,
+        data_congelamento: 1,
+        data_cancelamento: 1,
+        contratado_nome: 1
+      }).lean();
+
+      const relatorioVagas = vagas.map(vaga => ({
+        codigo_vaga: vaga.codigo_vaga,
+        posicao: vaga.detalhe_vaga?.posicaoVaga || '',
+        setor: vaga.detalhe_vaga?.setor || '',
+        solicitante: vaga.solicitante || '',
+        fase_workflow: vaga.fase_workflow || '',
+        data_abertura: vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR') : '',
+        data_finalizacao: vaga.data_finalizacao ? new Date(vaga.data_finalizacao).toLocaleDateString('pt-BR') : '',
+        data_congelamento: vaga.data_congelamento ? new Date(vaga.data_congelamento).toLocaleDateString('pt-BR') : '',
+        data_cancelamento: vaga.data_cancelamento ? new Date(vaga.data_cancelamento).toLocaleDateString('pt-BR') : '',
+        contratado_nome: vaga.contratado_nome || '',
+        motivo_solicitacao: vaga.detalhe_vaga?.motivoSolicitacao || '',
+        tipo_contratacao: vaga.detalhe_vaga?.tipoContratacao || '',
+        urgencia: vaga.detalhe_vaga?.urgenciaContratacao || ''
+      }));
+
+      console.log(`📋 Encontradas ${relatorioVagas.length} vagas no período${status && status !== 'todos' ? ` com status: ${status}` : ''}`);
+
+      return ApiResponse.success(res, 200, 'Relatório de vagas gerado com sucesso.', { vagas: relatorioVagas });
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório de vagas:', error);
+      next(error);
+    }
+  }
+
+  // Enviar relatório por email
+  async enviarRelatorioPorEmail(req, res, next) {
+    try {
+      const { titulo, remetente, destinatarios, corpo, dataInicio, dataFim, tipo } = req.body;
+
+      // Verificar se o usuário está autenticado
+      if (!req.user || req.user.guest) {
+        console.log('❌ Usuário não autenticado tentando enviar email');
+        return ApiResponse.error(res, 401, 'Usuário não autenticado. Token válido é obrigatório para envio de emails.');
+      }
+
+      const usuarioLogado = {
+        id: req.user.id || req.user.user_id,
+        email: req.user.email || req.user.username,
+        nome: req.user.first_name || req.user.nome || req.user.name,
+        perfil: req.user.perfil || req.user.role || 'usuário'
+      };
+
+      console.log(`📧 Iniciando envio de email`);
+      console.log(`👤 Usuário autenticado:`, {
+        id: usuarioLogado.id,
+        email: usuarioLogado.email,
+        nome: usuarioLogado.nome,
+        perfil: usuarioLogado.perfil
+      });
+
+      // Validações obrigatórias
+      if (!titulo || !destinatarios || !corpo) {
+        console.log('❌ Validação falhou: campos obrigatórios ausentes');
+        return ApiResponse.badRequest(res, 'Título, destinatários e corpo do email são obrigatórios.');
+      }
+
+      if (!dataInicio || !dataFim || !tipo) {
+        console.log('❌ Validação falhou: dados do relatório ausentes');
+        return ApiResponse.badRequest(res, 'Data de início, data fim e tipo do relatório são obrigatórios.');
+      }
+
+      // Validar formato de emails
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailList = destinatarios.split(',').map(email => email.trim());
+      const invalidEmails = emailList.filter(email => !emailRegex.test(email));
+      
+      if (invalidEmails.length > 0) {
+        console.log('❌ Emails inválidos encontrados:', invalidEmails);
+        return ApiResponse.badRequest(res, `Emails inválidos: ${invalidEmails.join(', ')}`);
+      }
+
+      console.log(`📧 Preparando envio de email do relatório de ${tipo}`);
+      console.log(`📧 Dados do email:`, {
+        titulo,
+        remetente: remetente || 'Sistema Portal (usar padrão)',
+        destinatarios,
+        emailsCount: emailList.length,
+        periodo: `${dataInicio} a ${dataFim}`,
+        tipoRelatorio: tipo,
+        corpoLength: corpo.length
+      });
+
+      // Criar conexão de email
+      console.log('📧 Criando conexão com o servidor de email...');
+      const transporter = await MailService.criarConexaoEmail();
+
+      // Enviar email
+      console.log('📧 Enviando email...');
+      await MailService.SendMailWithCustomSender(
+        titulo,
+        corpo,
+        destinatarios,
+        remetente, // Pode ser null, undefined ou string vazia - será tratado pelo service
+        transporter
+      );
+
+      console.log(`✅ Email enviado com sucesso para: ${destinatarios}`);
+
+      // Log de auditoria
+      console.log(`📋 AUDITORIA - Email enviado:`, {
+        usuario: usuarioLogado.email,
+        usuarioId: usuarioLogado.id,
+        acao: 'ENVIO_EMAIL_RELATORIO',
+        tipoRelatorio: tipo,
+        destinatarios: emailList,
+        dataHora: new Date().toISOString()
+      });
+
+      return ApiResponse.success(res, 200, 'Email enviado com sucesso!', {
+        titulo,
+        destinatarios: emailList,
+        destinatariosCount: emailList.length,
+        remetente: remetente || process.env.EMAIL_PORTAL,
+        dataEnvio: new Date().toISOString(),
+        tipoRelatorio: tipo,
+        periodo: `${dataInicio} a ${dataFim}`,
+        // Informações do usuário para auditoria
+        enviadoPor: {
+          id: usuarioLogado.id,
+          email: usuarioLogado.email,
+          nome: usuarioLogado.nome
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Erro ao enviar email:', error);
+      console.error('❌ Stack trace:', error.stack);
+      const errorMessage = error.message || 'Erro interno do servidor ao enviar email';
+      return ApiResponse.error(res, 500, `Erro ao enviar email: ${errorMessage}`);
     }
   }
 }

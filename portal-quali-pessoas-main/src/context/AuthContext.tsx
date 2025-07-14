@@ -22,29 +22,57 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('🔐 Iniciando login no frontend...');
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+      
       const data = await response.json();
-      console.log(data);
+      console.log('📊 Resposta do login recebida:', {
+        success: data.success,
+        hasData: !!data.data,
+        hasToken: !!(data.data?.token || data.data?.access_token),
+        structure: Object.keys(data.data || {})
+      });
+      
       if (!response.ok || !data.success) {
-        return { success: false, message: 'E-mail ou senha inválidos.1' };
+        console.log('❌ Login falhou:', data.message);
+        return { success: false, message: 'E-mail ou senha inválidos.' };
       }
+      
       setUser(data);
       setIsAuthenticated(true);
+      
+      // Armazenar dados do usuário
       sessionStorage.setItem('user', JSON.stringify(data));
+      
+      // Armazenar token separadamente para facilitar acesso
+      const token = data.data?.token || data.data?.access_token || data.data?.auth?.token?.access;
+      if (token) {
+        console.log('✅ Token encontrado e será armazenado:', token.substring(0, 30) + '...');
+        sessionStorage.setItem('token', token);
+      } else {
+        console.warn('⚠️ Token não encontrado na resposta do login');
+        console.log('📋 Estrutura completa da resposta:', JSON.stringify(data, null, 2));
+      }
+      
+      console.log('✅ Login concluído com sucesso no frontend');
       return { success: true };
-    } catch {
+    } catch (error) {
+      console.error('❌ Erro durante login no frontend:', error);
       return { success: false, message: 'Erro ao conectar ao servidor.' };
     }
   };
 
   const logout = () => {
+    console.log('🚪 Fazendo logout...');
     setIsAuthenticated(false);
     setUser(null);
-    sessionStorage.removeItem('user'); 
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token'); // Remover token também
+    console.log('✅ Logout concluído');
   };
 
   return (

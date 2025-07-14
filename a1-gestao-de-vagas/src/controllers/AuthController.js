@@ -4,19 +4,51 @@ const Auth = require('../middlewares/auth');
 class AuthController {
     async login(req, res, next) {
         try {
+            console.log('🔐 Iniciando processo de login...');
+            console.log('📋 Dados da requisição:', req.body);
 
             const auth = await Auth.login(JSON.stringify(req.body));
+            console.log('✅ Login no serviço de auth bem-sucedido:', {
+                hasToken: !!auth.token,
+                tokenType: auth.token ? typeof auth.token : 'N/A',
+                accessToken: auth.token?.access ? 'presente' : 'ausente'
+            });
+
             const detalhes = await Auth.detalhesUsuarioLogado(auth.token.access);
-            const data = { auth, detalhes }
+            console.log('✅ Detalhes do usuário obtidos:', {
+                id: detalhes.id || detalhes.user_id,
+                email: detalhes.email || detalhes.username,
+                nome: detalhes.first_name || detalhes.nome
+            });
+
+            // Estrutura de resposta melhorada para facilitar acesso ao token
+            const data = { 
+                auth, 
+                detalhes,
+                // Adicionar token diretamente na raiz para facilitar acesso no frontend
+                token: auth.token.access,
+                access_token: auth.token.access,
+                refresh_token: auth.token.refresh
+            };
+
+            console.log('📊 Estrutura de resposta do login:', {
+                hasAuth: !!data.auth,
+                hasDetalhes: !!data.detalhes,
+                hasToken: !!data.token,
+                hasAccessToken: !!data.access_token,
+                tokenLength: data.token ? data.token.length : 0
+            });
 
             if (auth.token) {
-                //console.log(data)
+                console.log('✅ Login concluído com sucesso, retornando dados com token');
                 return ApiResponse.success(res, 201, 'Usuário logado com sucesso.', data);
+            } else {
+                console.log('❌ Login falhou - token não encontrado');
+                return ApiResponse.Unauthorized(res, auth);
             }
-            else return ApiResponse.Unauthorized(res, auth);
-
 
         } catch (error) {
+            console.error('❌ Erro durante o login:', error.message);
             next(error); // Encaminha o erro para o errorHandler
         }
     }
