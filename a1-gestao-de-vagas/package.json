@@ -31,7 +31,8 @@
     "mongoose": "^8.16.0",
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.3",
-    "pg": "^8.16.2"
+    "pg": "^8.16.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

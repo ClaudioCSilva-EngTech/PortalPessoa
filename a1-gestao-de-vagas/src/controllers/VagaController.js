@@ -483,7 +483,7 @@ class VagaController {
   // Enviar relatório por email
   async enviarRelatorioPorEmail(req, res, next) {
     try {
-      const { titulo, remetente, destinatarios, corpo, dataInicio, dataFim, tipo } = req.body;
+      const { titulo, remetente, destinatarios, corpo, dataInicio, dataFim, tipo, anexo } = req.body;
 
       // Verificar se o usuário está autenticado
       if (!req.user || req.user.guest) {
@@ -535,24 +535,29 @@ class VagaController {
         emailsCount: emailList.length,
         periodo: `${dataInicio} a ${dataFim}`,
         tipoRelatorio: tipo,
-        corpoLength: corpo.length
+        corpoLength: corpo.length,
+        anexo: anexo ? { nome: anexo.nome, tipo: anexo.tipo, tamanho: anexo.conteudo?.length } : null
       });
 
       // Criar conexão de email
       console.log('📧 Criando conexão com o servidor de email...');
       const transporter = await MailService.criarConexaoEmail();
 
-      // Enviar email
+      // Enviar email com anexo (se presente)
       console.log('📧 Enviando email...');
       await MailService.SendMailWithCustomSender(
         titulo,
         corpo,
         destinatarios,
         remetente, // Pode ser null, undefined ou string vazia - será tratado pelo service
-        transporter
+        transporter,
+        anexo // Anexo opcional
       );
 
       console.log(`✅ Email enviado com sucesso para: ${destinatarios}`);
+      if (anexo) {
+        console.log(`📎 Arquivo anexado: ${anexo.nome}`);
+      }
 
       // Log de auditoria
       console.log(`📋 AUDITORIA - Email enviado:`, {
@@ -561,6 +566,7 @@ class VagaController {
         acao: 'ENVIO_EMAIL_RELATORIO',
         tipoRelatorio: tipo,
         destinatarios: emailList,
+        anexo: anexo ? anexo.nome : null,
         dataHora: new Date().toISOString()
       });
 
@@ -572,6 +578,7 @@ class VagaController {
         dataEnvio: new Date().toISOString(),
         tipoRelatorio: tipo,
         periodo: `${dataInicio} a ${dataFim}`,
+        anexo: anexo ? anexo.nome : null,
         // Informações do usuário para auditoria
         enviadoPor: {
           id: usuarioLogado.id,

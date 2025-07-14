@@ -101,7 +101,7 @@ async function testLocalAuthService() {
   console.log('\n🔧 Testando AuthService local...');
   
   try {
-    const AuthService = require('./src/middlewares/auth');
+    const AuthService = require('../src/middlewares/auth');
     
     console.log('✅ AuthService carregado com sucesso');
     console.log('   Host configurado:', AuthService.host);
