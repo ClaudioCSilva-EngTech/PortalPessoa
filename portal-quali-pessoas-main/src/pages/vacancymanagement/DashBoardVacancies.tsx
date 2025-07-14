@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import {
     Box, Button, Container, Dialog, DialogContent, DialogTitle, Divider, Grid, Typography, Paper, Avatar, Chip, IconButton
 } from "@mui/material";
-import { Add, Close, Upload, List, Assessment } from "@mui/icons-material";
+import { Add, Close, Upload, Assessment } from "@mui/icons-material";
 import ApiServiceVaga from "../../services/ApiServiceVaga";
 import "../../styles/DashBoardVacancies.scss";
 import FormNewVacancy from "./FormNewVacancy";
@@ -265,6 +265,20 @@ const DashBoardVacancies: React.FC = () => {
         const sourceStatus = source.droppableId;
         const destStatus = destination.droppableId;
 
+        // REGRA: Vagas finalizadas não podem ser movidas para outras fases
+        if (sourceStatus === 'Finalizada') {
+            console.warn('⚠️ Tentativa de mover vaga finalizada bloqueada');
+            alert('❌ Vagas finalizadas não podem ser alteradas para outras fases.\n\nUma vez finalizada, a vaga não pode retornar a fases anteriores.');
+            return;
+        }
+
+        // REGRA: Usuários que não são do Departamento Pessoal só podem mover vagas para "Cancelada"
+        if (!isDepartamentoPessoal && destStatus !== 'Cancelada') {
+            console.warn('⚠️ Tentativa de alteração de vaga por usuário sem permissão bloqueada');
+            alert('❌ Sem permissão para esta operação.\n\nApenas usuários do Departamento Pessoal podem alterar vagas para outras fases além de "Cancelada".\n\nVocê só pode cancelar ou abrir vagas.');
+            return;
+        }
+
         const sourceList = Array.from(kanban[sourceStatus]);
         const [movedVaga] = sourceList.splice(source.index, 1);
 
@@ -484,47 +498,101 @@ const DashBoardVacancies: React.FC = () => {
     };
 
     // Renderiza card de vaga
-    const renderCard = (vaga: any, index: number) => (
-        <Draggable draggableId={vaga.codigo_vaga} index={index} key={vaga.codigo_vaga}>
-            {(provided) => (
-                <Paper
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className={`vacancy-card ${getStatus(vaga).toLowerCase().replace(/\s/g, '-')}`}
-                    onClick={() => {
-                        setSelectedVaga(vaga);
-                        setOpenDetail(true);
-                    }}
-                >
-                    <Grid container alignItems="center" spacing={1} wrap="wrap">
-                        <Grid>
-                            <Avatar className="vacancy-avatar">
-                                {vaga.solicitante?.[0]}
-                            </Avatar>
+    const renderCard = (vaga: any, index: number) => {
+        const vagaStatus = getStatus(vaga);
+        const isFinalized = vagaStatus === 'Finalizada';
+        
+        return (
+            <Draggable 
+                draggableId={vaga.codigo_vaga} 
+                index={index} 
+                key={vaga.codigo_vaga}
+                isDragDisabled={isFinalized} // Desabilitar arrasto para vagas finalizadas
+            >
+                {(provided, snapshot) => (
+                    <Paper
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className={`vacancy-card ${vagaStatus.toLowerCase().replace(/\s/g, '-')} ${isFinalized ? 'finalized-card' : ''}`}
+                        onClick={() => {
+                            setSelectedVaga(vaga);
+                            setOpenDetail(true);
+                        }}
+                        sx={{
+                            opacity: isFinalized ? 0.8 : 1,
+                            cursor: isFinalized ? 'default' : 'grab',
+                            border: isFinalized ? '2px solid #757575' : 'none',
+                            position: 'relative',
+                            ...(snapshot.isDragging && !isFinalized && {
+                                transform: 'rotate(5deg)',
+                                boxShadow: '0 8px 16px rgba(0,0,0,0.3)'
+                            })
+                        }}
+                    >
+                        {isFinalized && (
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: 4,
+                                    right: 4,
+                                    bgcolor: '#757575',
+                                    color: 'white',
+                                    borderRadius: '50%',
+                                    width: 20,
+                                    height: 20,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold'
+                                }}
+                                title="Vaga finalizada - não pode ser movida"
+                            >
+                                🔒
+                            </Box>
+                        )}
+                        <Grid container alignItems="center" spacing={1} wrap="wrap">
+                            <Grid>
+                                <Avatar className="vacancy-avatar">
+                                    {vaga.solicitante?.[0]}
+                                </Avatar>
+                            </Grid>
+                            <Grid>
+                                <Typography className="vacancy-title">{vaga.detalhe_vaga?.posicaoVaga}</Typography>
+                                <Typography className="vacancy-setor">{vaga.detalhe_vaga?.setor}</Typography>
+                            </Grid>
+                            <Grid>
+                                <Chip
+                                    label={vagaStatus}
+                                    className={`vacancy-status ${vagaStatus.toLowerCase().replace(/\s/g, '-')}`}
+                                    size="small"
+                                />
+                            </Grid>
                         </Grid>
-                        <Grid>
-                            <Typography className="vacancy-title">{vaga.detalhe_vaga?.posicaoVaga}</Typography>
-                            <Typography className="vacancy-setor">{vaga.detalhe_vaga?.setor}</Typography>
-                        </Grid>
-                        <Grid>
-                            <Chip
-                                label={getStatus(vaga)}
-                                className={`vacancy-status ${getStatus(vaga).toLowerCase().replace(/\s/g, '-')}`}
-                                size="small"
-                            />
-                        </Grid>
-                    </Grid>
-                    <Typography className="vacancy-motivo">
-                        {vaga.detalhe_vaga?.motivoSolicitacao}
-                    </Typography>
-                    <Typography className="vacancy-data">
-                        Publicada em: {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString() : ""}
-                    </Typography>
-                </Paper>
-            )}
-        </Draggable>
-    );
+                        <Typography className="vacancy-motivo">
+                            {vaga.detalhe_vaga?.motivoSolicitacao}
+                        </Typography>
+                        <Typography className="vacancy-data">
+                            Publicada em: {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString() : ""}
+                        </Typography>
+                        {isFinalized && (
+                            <Typography 
+                                sx={{ 
+                                    fontSize: '11px', 
+                                    color: '#757575', 
+                                    fontStyle: 'italic',
+                                    mt: 0.5 
+                                }}
+                            >
+                                ⚠️ Finalizada - não pode ser alterada
+                            </Typography>
+                        )}
+                    </Paper>
+                )}
+            </Draggable>
+        );
+    };
 
     // Detalhes da vaga (modal)
     const renderVagaDetail = () => (
@@ -625,9 +693,26 @@ const DashBoardVacancies: React.FC = () => {
         <Box className="dashboard-vacancies-bg">
             <Container maxWidth={false} disableGutters className="dashboard-main-container dashboard-kanban-container">
                 <Box className="dashboard-header">
-                    <Typography className="dashboard-title" sx={{ fontWeight: 'bold' }}>
-                        Vagas Abertas ({getTotalVagasAbertas()})
-                    </Typography>
+                    <Box>
+                        <Typography className="dashboard-title" sx={{ fontWeight: 'bold' }}>
+                            Vagas Abertas ({getTotalVagasAbertas()})
+                        </Typography>
+                        {!isDepartamentoPessoal && (
+                            <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                    color: '#f57c00', 
+                                    fontStyle: 'italic',
+                                    mt: 0.5,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5
+                                }}
+                            >
+                                ⚠️ Você só pode abrir ou cancelar vagas. Para outras alterações, contate o Departamento Pessoal.
+                            </Typography>
+                        )}
+                    </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         {isDepartamentoPessoal && (
                             <Button
@@ -637,10 +722,13 @@ const DashBoardVacancies: React.FC = () => {
                                 onClick={() => setOpenBulkUpload(true)}
                                 className="dashboard-btn-upload"
                             >
-                                Upload em Lote
+                                ABRIR VAGAS EM LOTE
                             </Button>
                         )}
-                        {isDepartamentoPessoal && (
+
+                      {/* comentado para revisão futura
+
+                       {isDepartamentoPessoal && (
                             <Button
                                 variant="outlined"
                                 color="info"
@@ -650,6 +738,8 @@ const DashBoardVacancies: React.FC = () => {
                                 Relatório Desligados
                             </Button>
                         )}
+                    */}
+
                         {isDepartamentoPessoal && (
                             <Button
                                 variant="outlined"
@@ -676,27 +766,76 @@ const DashBoardVacancies: React.FC = () => {
                         <Grid container className="dashboard-kanban-row" wrap="nowrap">
                             {KANBAN_STATUS.map(status => {
                                 const vagasStatus = Array.isArray(kanban[status]) ? kanban[status] : [];
+                                const isRestrictedColumn = !isDepartamentoPessoal && status !== 'Cancelada' ;
+                                
                                 return (
-                                    <Droppable droppableId={status} key={status}>
-                                        {(provided) => (
+                                    <Droppable 
+                                        droppableId={status} 
+                                        key={status}
+                                        isDropDisabled={isRestrictedColumn} // Desabilitar drop para usuários sem permissão
+                                    >
+                                        {(provided, snapshot) => (
                                             <Grid
                                                 className="dashboard-kanban-col"
                                                 ref={provided.innerRef}
                                                 {...provided.droppableProps}
+                                                sx={{
+                                                    ...(isRestrictedColumn && {
+                                                        opacity: 0.6,
+                                                        position: 'relative',
+                                                        '&::after': {
+                                                            content: '""',
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            left: 0,
+                                                            right: 0,
+                                                            bottom: 0,
+                                                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                                            pointerEvents: 'none',
+                                                            zIndex: 1
+                                                        }
+                                                    }),
+                                                    ...(snapshot.isDraggingOver && isRestrictedColumn && {
+                                                        backgroundColor: '#ffebee',
+                                                        border: '2px dashed #f44336'
+                                                    })
+                                                }}
                                             >
-                                                <Typography className="dashboard-kanban-title">
+                                                <Typography 
+                                                    className="dashboard-kanban-title"
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1,
+                                                        position: 'relative',
+                                                        zIndex: 2
+                                                    }}
+                                                >
                                                     {status} ({vagasStatus.length})
+                                                    {isRestrictedColumn && (
+                                                        <Box
+                                                            sx={{
+                                                                fontSize: '14px',
+                                                                color: '#f44336'
+                                                            }}
+                                                            title="Você não tem permissão para mover vagas para esta coluna"
+                                                        >
+                                                            🚫
+                                                        </Box>
+                                                    )}
                                                 </Typography>
                                                 <Divider className="dashboard-kanban-divider" />
-                                                <Box>
+                                                <Box sx={{ position: 'relative', zIndex: 2 }}>
                                                     {vagasStatus.length === 0 ? (
                                                         <Typography className="dashboard-kanban-empty">
-                                                            Não há vagas nesta coluna
+                                                            {isRestrictedColumn 
+                                                                ? "Sem permissão para mover o card" 
+                                                                : "Não há vagas nesta coluna"
+                                                            }
                                                         </Typography>
                                                     ) : (
                                                         vagasStatus.map((vaga: any, idx: number) => renderCard(vaga, idx))
-                                                    )
-                                                    }
+                                                    )}
                                                     {provided.placeholder}
                                                 </Box>
                                             </Grid>
