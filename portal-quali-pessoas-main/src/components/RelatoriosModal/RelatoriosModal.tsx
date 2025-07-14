@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -244,6 +244,8 @@ const RelatoriosModal: React.FC<RelatoriosModalProps> = ({
       ? `RELATÓRIO DE CONTRATADOS - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}`
       : `RELATÓRIO DE VAGAS - ${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}`;
 
+    const remetenteAtual = '[Gestão de Vagas] Portal Quali Pessoas'; // Valor fixo para evitar re-renders
+
     const corpo = isContratados 
       ? `${titulo}
 
@@ -256,7 +258,7 @@ ${contratados.map((contratado, index) =>
 Total de contratações: ${contratados.length}
 
 Atenciosamente,
-${emailData.remetente}`
+${remetenteAtual}`
       : `${titulo}
 
 Segue relatório de vagas no período de ${new Date(filtros.dataInicio).toLocaleDateString('pt-BR')} a ${new Date(filtros.dataFim).toLocaleDateString('pt-BR')}:
@@ -268,10 +270,10 @@ ${vagas.map((vaga, index) =>
 Total de vagas: ${vagas.length}
 
 Atenciosamente,
-${emailData.remetente}`;
+${remetenteAtual}`;
 
     return corpo;
-  }, [tabValue, contratados, vagas, filtros.dataInicio, filtros.dataFim, emailData.remetente]);
+  }, [tabValue, contratados, vagas, filtros.dataInicio, filtros.dataFim]); // Removida dependência emailData.remetente
 
   const buscarContratados = async () => {
     setLoading(true);
@@ -396,7 +398,12 @@ ${emailData.remetente}`;
     setShowEmailModal(true);
   };
 
-  const enviarEmail = async () => {
+  // Callbacks otimizados para evitar re-renders da EmailModal
+  const handleCloseEmailModal = useCallback(() => {
+    setShowEmailModal(false);
+  }, []);
+
+  const handleSubmitEmail = useCallback(async () => {
     if (!emailData.destinatarios || !emailData.titulo) {
       alert('Por favor, preencha o título e os destinatários.');
       return;
@@ -415,7 +422,7 @@ ${emailData.remetente}`;
       
       const emailPayload = {
         titulo: emailData.titulo,
-        remetente: emailData.remetente, // Pode ser vazio - o backend usará o padrão do sistema
+        remetente: emailData.remetente,
         destinatarios: emailData.destinatarios,
         corpo: emailData.corpo,
         dataInicio: filtros.dataInicio,
@@ -497,20 +504,35 @@ ${emailData.remetente}`;
     } finally {
       setEmailLoading(false);
     }
-  };
+  }, [emailData, tabValue, filtros.dataInicio, filtros.dataFim]);
 
-  const EmailModal = () => (
-    <Dialog open={showEmailModal} onClose={() => setShowEmailModal(false)} maxWidth="md" fullWidth>
+  // Componente EmailModal otimizado com React.memo para evitar re-renders desnecessários
+  const EmailModal = React.memo(({ 
+    open, 
+    onClose, 
+    emailData, 
+    setEmailData, 
+    onSubmit, 
+    emailLoading 
+  }: {
+    open: boolean;
+    onClose: () => void;
+    emailData: { titulo: string; remetente: string; destinatarios: string; corpo: string };
+    setEmailData: React.Dispatch<React.SetStateAction<{ titulo: string; remetente: string; destinatarios: string; corpo: string }>>;
+    onSubmit: () => void;
+    emailLoading: boolean;
+  }) => (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">Configurar Email</Typography>
-          <IconButton onClick={() => setShowEmailModal(false)}>
+          <IconButton onClick={onClose}>
             <Close />
           </IconButton>
         </Box>
       </DialogTitle>
       <DialogContent>
-        <form onSubmit={(e) => { e.preventDefault(); enviarEmail(); }} noValidate>
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} noValidate>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
               fullWidth
@@ -554,7 +576,7 @@ ${emailData.remetente}`;
             <Button 
               type="button"
               variant="outlined" 
-              onClick={() => setShowEmailModal(false)}
+              onClick={onClose}
               disabled={emailLoading}
             >
               Cancelar
@@ -571,7 +593,7 @@ ${emailData.remetente}`;
         </form>
       </DialogContent>
     </Dialog>
-  );
+  ));
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
@@ -817,7 +839,14 @@ ${emailData.remetente}`;
         )}
       </DialogContent>
 
-      <EmailModal />
+      <EmailModal
+        open={showEmailModal}
+        onClose={handleCloseEmailModal}
+        emailData={emailData}
+        setEmailData={setEmailData}
+        onSubmit={handleSubmitEmail}
+        emailLoading={emailLoading}
+      />
     </Dialog>
   );
 };
