@@ -120,7 +120,7 @@ interface VagaData {
   motivoSolicitacao: 'Aumento de Quadro' | 'Substituição' | 'Remanejamento' | 'Afastamento' | 'Outro';
   motivoSubstituicao?: string; // Condicional, se motivoSolicitacao for 'Substituição'
   motivoAfastamento?: string; // Condicional, se motivoSolicitacao for 'Afastamento'
-  tipoContratacao: 'Jovem Aprendiz' | 'Estagiário' | 'CLT' | 'PJ';
+  tipoContratacao: 'Jovem Aprendiz' | 'Estagiário' | 'Estagiário CIEE' | 'CLT' | 'PJ';
   horarioTrabalho: string;
   salario: number;
   requisitosVaga: string;
@@ -131,7 +131,7 @@ interface VagaData {
   urgenciaContratacao: 'Baixa' | 'Média' | 'Alta' | 'Urgente';
   vagaAfirmativa: boolean;
   tipoVagaAfirmativa?: string;
-  escolaridadeRequerida: 'Ensino Fundamental Completo' | 'Ensino Médio Completo' | 'Tecnólogo' | 'Ensino Superior Completo' | 'Pós-Graduação' | 'Mestrado' | 'Doutorado';
+  escolaridadeRequerida: 'Ensino Fundamental Completo' | 'Ensino Médio Completo' | 'Ensino Médio Cursando' | 'Tecnólogo' | 'Ensino Superior Completo' | 'Ensino Superior Cursando' | 'Pós-Graduação' | 'Mestrado' | 'Doutorado';
   divulgacao: 'Interna' | 'Externa';
   redesSociaisDivulgacao?: string[]; // Condicional, se divulgacao for 'Externa'
 }
@@ -468,9 +468,16 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
                 <InputLabel id="tipoContratacao-label">Tipo de Contratação</InputLabel>
                 <MediumSelect labelId="tipoContratacao-label" id="tipoContratacao" name="tipoContratacao"
                   value={formik.values.tipoContratacao} label="Tipo de Contratação"
-                  onChange={formik.handleChange} onBlur={formik.handleBlur}>
+                  onChange={(e) => {
+                    formik.handleChange(e);
+                    // Se for Estagiário CIEE, zerar o salário
+                    if (e.target.value === "Estagiário CIEE") {
+                      formik.setFieldValue('salario', 0);
+                    }
+                  }} onBlur={formik.handleBlur}>
                   <MenuItem value="Jovem Aprendiz">Jovem Aprendiz</MenuItem>
                   <MenuItem value="Estagiário">Estagiário</MenuItem>
+                  <MenuItem value="Estagiário CIEE">Estagiário CIEE</MenuItem>
                   <MenuItem value="CLT">CLT</MenuItem>
                   <MenuItem value="PJ">PJ</MenuItem>
                 </MediumSelect>
@@ -487,6 +494,7 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
                   onChange={formik.handleChange} onBlur={formik.handleBlur}>
                   <MenuItem value="Jovem Aprendiz">09:00 às 18:48 (Intervalo 1h)</MenuItem>
                   <MenuItem value="Estagiário">09:00 às 17:48 (Intervalo 1h)</MenuItem>
+                  <MenuItem value="Estagiário CIEE"> 4 horas </MenuItem>
                   <MenuItem value="CLT">09:00 às 13:30 (Intervalo 30min)</MenuItem>
                   <MenuItem value="PJ">14:00 às 18:30 (Intervalo 30min)</MenuItem>
                 </MediumSelect>
@@ -513,7 +521,25 @@ const FormNewVacancy: React.FC<FormNewVacancyProps> = ({ onClose, onVagaCriada }
                 InputProps={{
                   startAdornment: <InputAdornment position="start">R$</InputAdornment>,
                 }}
+                disabled={formik.values.tipoContratacao === "Estagiário CIEE"}
               />
+              {formik.values.tipoContratacao === "Estagiário CIEE" && (
+                <Typography 
+                  variant="caption" 
+                  color="warning.main" 
+                  sx={{ 
+                    display: 'block', 
+                    mt: 1, 
+                    p: 1, 
+                    backgroundColor: 'warning.light', 
+                    borderRadius: 1,
+                    border: '1px solid',
+                    borderColor: 'warning.main'
+                  }}
+                >
+                  ⚠️ Caro gestor o contrato do Estagiário CIEE possue prazo máximo de 6 meses, Fique Atento!. Sobre remuneração, fale como RH. 
+                </Typography>
+              )}
             </Grid>
           </Grid>
         </FormSection>

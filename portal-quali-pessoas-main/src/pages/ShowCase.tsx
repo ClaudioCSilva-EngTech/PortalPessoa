@@ -8,7 +8,7 @@ import Header from "../components/Header/Header";
 import "../styles/Recruitment.css";
 
 // Feature toggle para liberar cards
-const FEATURE_TOGGLE_EM_BREVE = true;
+const FEATURE_TOGGLE_EM_BREVE = false;
 
 interface ShowCaseProps {
   onComponentChange: (componentName: string, subComponentName?: string) => void;
@@ -49,7 +49,8 @@ const ShowCase: React.FC<ShowCaseProps> = ({ onComponentChange }) => {
     }
   })();
 
-  const NAME_DP_RH = 'DEPARTAMENTOPESSOAL';
+  const NAME_DP_RH = 'RECURSOS HUMANOS - QUALI';
+  const NAME_DP_RECRUITAMENTO = 'DepartamentoPessoal';
 
   const EmBreveTag = () => (
     <div
@@ -274,7 +275,8 @@ const ShowCase: React.FC<ShowCaseProps> = ({ onComponentChange }) => {
           </div>
         </div>
       </section>
-      {currentUser?.data?.detalhes?.setor?.toUpperCase() === NAME_DP_RH && (
+      {currentUser?.data?.detalhes?.setor?.toUpperCase() === NAME_DP_RH.toUpperCase() || 
+       currentUser?.data?.detalhes?.setor?.toUpperCase() === NAME_DP_RECRUITAMENTO.toUpperCase() && (
         <SectionRH onComponentChange={onComponentChange} />
       )}
    {/*}   <ChatWidget

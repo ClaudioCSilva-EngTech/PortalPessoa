@@ -75,7 +75,7 @@ const BulkVacancyUploadModal: React.FC<BulkVacancyUploadModalProps> = ({
   };
 
   // Função para persistir apenas os desligados sem criar vagas
-  const handleSaveDesligadosOnly = async () => {
+ /* const handleSaveDesligadosOnly = async () => {
     setProcessingVacancies(true);
     setIsCancelled(false);
 
@@ -140,6 +140,7 @@ const BulkVacancyUploadModal: React.FC<BulkVacancyUploadModalProps> = ({
       }
     }
   };
+*/
 
   const handleCreateVacancies = async () => {
     setProcessingVacancies(true);
@@ -530,6 +531,8 @@ const BulkVacancyUploadModal: React.FC<BulkVacancyUploadModalProps> = ({
         >
           Cancelar Upload
         </Button>
+
+        {/* Habilitar na feature de desligados (DP) 
         <Button 
           variant="outlined" 
           onClick={handleSaveDesligadosOnly}
@@ -537,6 +540,8 @@ const BulkVacancyUploadModal: React.FC<BulkVacancyUploadModalProps> = ({
         >
           {processingVacancies ? 'Salvando...' : 'Somente Carregar Desligados'}
         </Button>
+      */}
+
         <Button
           variant="contained"
           onClick={handleCreateVacancies}

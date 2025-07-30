@@ -1,5 +1,6 @@
 // src/controllers/DesligadoController.js
 const Desligado = require('../models/Desligado');
+const IntegracaoApData = require('../models/IntegracaoApData');
 const ApiResponse = require('../utils/ApiResponse');
 const MailService = require('../services/MailService');
 
@@ -66,11 +67,50 @@ class DesligadoController {
 
       // Inserir em lote, ignorando duplicatas
       const result = await Desligado.insertMany(desligados, { 
-        ordered: false, // Continua inserindo mesmo se houver erro em alguns documentos
+        ordered: false,
         lean: true 
       });
 
       return ApiResponse.success(res, 201, `${result.length} funcionário(s) desligado(s) salvos com sucesso.`, result);
+
+    } catch (error) {
+      // Se erro for de duplicata (código 11000), ainda considerar sucesso parcial
+      if (error.code === 11000) {
+        return ApiResponse.success(res, 201, 'Funcionários processados. Alguns já existiam na base e foram ignorados.');
+      }
+      next(error);
+    }
+  }
+
+  /**
+   * Salvar funcionários importados do APData
+   */
+  async criarBaseColaboradores(req, res, next) {
+    try {
+      const { colaboradores } = req.body;
+
+      if (!colaboradores || !Array.isArray(colaboradores)) {
+        return ApiResponse.badRequest(res, 'Dados de colaboradores deve ser um array válido.');
+      }
+
+      if (colaboradores.length === 0) {
+        return ApiResponse.badRequest(res, 'Array de colaboradores não pode estar vazio.');
+      }
+
+      // Validar dados obrigatórios
+      for (const colaborador of colaboradores) {
+        if (!colaborador.id_apdata || !colaborador.nomeCompleto) {
+          return ApiResponse.badRequest(res, 'idColaborador e nomeCompleto são obrigatórios para todos os registros.');
+        }
+      }
+
+      // Inserir em lote, ignorando duplicatas
+      const result = await IntegracaoApData.insertMany(colaboradores, { 
+        ordered: false, // Continua inserindo mesmo se houver erro em alguns documentos
+        lean: true 
+      });
+
+      return ApiResponse.success(res, 201, `${result.length} colaborador(es) salvos com sucesso.`, result);
 
     } catch (error) {
       // Se erro for de duplicata (código 11000), ainda considerar sucesso parcial

@@ -22,13 +22,14 @@ const componentMap: Record<string, React.ReactNode> = {
   IntegrationApData: <IntegrationApData />,
   DisciplinaryMeasure: <DisciplinaryMeasure />,
   EmployeeTermination: <EmployeeTermination />,
+  
 };
 
 const PeopleDepartmentManagement: React.FC<Props> = ({ initialComponent, onComponentChange }) => {
   const [activeComponent, setActiveComponent] = useState<string>(initialComponent || "ApprovalRequest");
 
   const [showTooltip, setShowTooltip] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationCount, ] = useState(0); //setNotificationCount
 
   const onOpenChat = () => {};
   const onMenuClick = (key: string) => setActiveComponent(key);

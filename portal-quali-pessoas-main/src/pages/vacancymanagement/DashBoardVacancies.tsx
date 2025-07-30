@@ -82,7 +82,10 @@ const DashBoardVacancies: React.FC = () => {
 
     // Verificar se o usuário é do Departamento Pessoal
     const isDepartamentoPessoal = useMemo(() => {
-        return user?.data?.detalhes?.setor?.toUpperCase() === "DEPARTAMENTOPESSOAL";
+        return user?.data?.detalhes?.setor?.toUpperCase() === "RECURSOS HUMANOS - QUALI".toUpperCase() ||
+        user?.data?.detalhes?.setor?.toUpperCase() === "DepartamentoPessoal".toUpperCase() || 
+        user?.data?.detalhes?.setor?.toUpperCase() === "Desenvolvimento".toUpperCase() || 
+        user?.data?.detalhes?.setor?.toUpperCase() === "Dados".toUpperCase();
     }, [user]);
 
     // Memoize currentUser e isRH para evitar re-renderizações desnecessárias
@@ -95,10 +98,20 @@ const DashBoardVacancies: React.FC = () => {
         }
     }, []);
 
-    const isRH = useMemo(() =>
-        currentUser?.data?.detalhes?.setor?.toUpperCase() === "DEPARTAMENTOPESSOAL",
-        [currentUser]
-    );
+    const isRH = useMemo(() => {
+        const setor = (currentUser?.data?.detalhes?.setor || "").toString().trim().toUpperCase();
+        // Lista de possíveis valores para RH
+        const setoresRH = [
+            "RECURSOS HUMANOS - QUALI",
+            "DEPARTAMENTOPESSOAL",
+            "RH",
+            "RECURSOS HUMANOS",
+            "DEPTO PESSOAL",
+            "DEPTO. PESSOAL",
+            "DEPARTAMENTO PESSOAL"
+        ];
+        return setoresRH.some(s => setor === s || setor.replace(/\s+/g, "") === s.replace(/\s+/g, ""));
+    }, [currentUser]);
 
     // Função para calcular total de vagas abertas (excluindo Canceladas)
     const getTotalVagasAbertas = () => {
@@ -709,7 +722,7 @@ const DashBoardVacancies: React.FC = () => {
                                     gap: 0.5
                                 }}
                             >
-                                ⚠️ Você só pode abrir ou cancelar vagas. Para outras alterações, contate o Departamento Pessoal.
+                                ⚠️ Você só pode abrir ou cancelar vagas. Para outras alterações, contate o Time de Recrutamento e RH.
                             </Typography>
                         )}
                     </Box>

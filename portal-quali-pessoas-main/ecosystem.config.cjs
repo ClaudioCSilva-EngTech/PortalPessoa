@@ -8,15 +8,15 @@ module.exports = {
     exec_mode: "fork", // ou "cluster" se quiser rodar várias instâncias e balancear carga
     env: { // Variáveis padrão, que serão sobrescritas por env_XYZ
       VITE_NODE_ENV: "development",
-      PORT: 3001
+      PORT: 3000
     },
     env_development: {
       VITE_NODE_ENV: "development",
-      VITE_PORT: 3001 // Porta padrão para desenvolvimento
+      VITE_PORT: 3000 // Porta padrão para desenvolvimento
     },
     env_homologation: { // Ambiente de homologação
       VITE_NODE_ENV: "homologation",
-      VITE_PORT: 3002 // Exemplo de porta para homologação
+      VITE_PORT: 8002 // Exemplo de porta para homologação
     },
     env_production: { // Ambiente de produção
       VITE_NODE_ENV: "production",

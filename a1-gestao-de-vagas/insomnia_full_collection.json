@@ -1,0 +1,475 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-07-29T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2025.7.29",
+  "resources": [
+    {
+      "_id": "env_1",
+      "parentId": null,
+      "modified": 0,
+      "created": 0,
+      "name": "Base Environment",
+      "data": {},
+      "_type": "environment"
+    },
+    {
+      "_id": "env_dev",
+      "parentId": "env_1",
+      "name": "DEV",
+      "data": { "base_url": "http://localhost:8000" },
+      "_type": "environment"
+    },
+    {
+      "_id": "env_hom",
+      "parentId": "env_1",
+      "name": "HOM",
+      "data": { "base_url": "http://192.168.4.117:8002" },
+      "_type": "environment"
+    },
+    {
+      "_id": "env_prd",
+      "parentId": "env_1",
+      "name": "PRD",
+      "data": { "base_url": "http://200.155.66.64:19689" },
+      "_type": "environment"
+    },
+    {
+      "_id": "wrk_1",
+      "name": "A1-Gestao-de-Vagas API",
+      "_type": "workspace"
+    },
+    
+    {
+      "_id": "fld_auth",
+      "parentId": "wrk_1",
+      "name": "Auth",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_auth_login",
+      "parentId": "fld_auth",
+      "name": "Login",
+      "url": "{{ base_url }}/login",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"usuario\": \"user\",\n  \"senha\": \"pass\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_detalhes",
+      "parentId": "fld_auth",
+      "name": "Detalhes Usuário",
+      "url": "{{ base_url }}/login/detalhes",
+      "method": "GET",
+      "_type": "request"
+    },
+    
+    {
+      "_id": "fld_colab",
+      "parentId": "wrk_1",
+      "name": "Colaboradores ApData",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_importar",
+      "parentId": "fld_colab",
+      "name": "Importar Colaboradores (CSV)",
+      "url": "{{ base_url }}/importar",
+      "method": "POST",
+      "body": { "mimeType": "multipart/form-data", "params": [ { "name": "file", "type": "file", "fileName": "colaboradores.csv" } ] },
+      "_type": "request"
+    },
+    {
+      "_id": "req_preview",
+      "parentId": "fld_colab",
+      "name": "Preview Importação (CSV)",
+      "url": "{{ base_url }}/preview",
+      "method": "POST",
+      "body": { "mimeType": "multipart/form-data", "params": [ { "name": "file", "type": "file", "fileName": "colaboradores.csv" } ] },
+      "_type": "request"
+    },
+    {
+      "_id": "req_listar",
+      "parentId": "fld_colab",
+      "name": "Listar Colaboradores",
+      "url": "{{ base_url }}/colaboradores",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_listar_gestor",
+      "parentId": "fld_colab",
+      "name": "Listar Colaboradores por Gestor",
+      "url": "{{ base_url }}/colaboradores/gestor/:id_apdata",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_buscar",
+      "parentId": "fld_colab",
+      "name": "Buscar Colaborador por ID",
+      "url": "{{ base_url }}/colaboradores/:id_apdata",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_deletar",
+      "parentId": "fld_colab",
+      "name": "Deletar Colaborador",
+      "url": "{{ base_url }}/colaboradores/:id_apdata",
+      "method": "DELETE",
+      "_type": "request"
+    },
+    {
+      "_id": "req_atualizar",
+      "parentId": "fld_colab",
+      "name": "Atualizar Colaborador",
+      "url": "{{ base_url }}/colaboradores/:id_apdata",
+      "method": "PUT",
+      "body": { "mimeType": "application/json", "text": "{\n  \"nomeCompleto\": \"Novo Nome\",\n  \"cargo\": \"Novo Cargo\"\n}" },
+      "_type": "request"
+    },
+    
+    {
+      "_id": "fld_desligado",
+      "parentId": "wrk_1",
+      "name": "Desligados",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_desligado_check",
+      "parentId": "fld_desligado",
+      "name": "Check Existentes",
+      "url": "{{ base_url }}/desligados/check-existing",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"idsApData\": [\"123\", \"456\"]\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_desligado_criar",
+      "parentId": "fld_desligado",
+      "name": "Criar Desligados",
+      "url": "{{ base_url }}/desligados",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "[{\n  \"id_apdata\": \"123\",\n  \"nomeCompleto\": \"Fulano\"\n}]" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_desligado_listar",
+      "parentId": "fld_desligado",
+      "name": "Listar Desligados",
+      "url": "{{ base_url }}/desligados",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_desligado_id",
+      "parentId": "fld_desligado",
+      "name": "Buscar Desligado por ID",
+      "url": "{{ base_url }}/desligados/:id",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_desligado_contratado",
+      "parentId": "fld_desligado",
+      "name": "Buscar Desligado por ID Contratado",
+      "url": "{{ base_url }}/desligados/contratado/:idContratado",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_desligado_relatorio_periodo",
+      "parentId": "fld_desligado",
+      "name": "Relatório Desligados por Período",
+      "url": "{{ base_url }}/desligados/relatorio/periodo",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_desligado_relatorio_email",
+      "parentId": "fld_desligado",
+      "name": "Enviar Relatório Desligados por Email",
+      "url": "{{ base_url }}/desligados/relatorio/email",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"titulo\": \"Relatório\",\n  \"remetente\": \"remetente@empresa.com\",\n  \"destinatarios\": \"dest@empresa.com\",\n  \"corpo\": \"Texto\",\n  \"dataInicio\": \"2025-01-01\",\n  \"dataFim\": \"2025-07-29\"\n}" },
+      "_type": "request"
+    },
+    
+    {
+      "_id": "fld_hierarquia",
+      "parentId": "wrk_1",
+      "name": "Hierarquia",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_hierarquia_criar",
+      "parentId": "fld_hierarquia",
+      "name": "Criar Hierarquia",
+      "url": "{{ base_url }}/hierarquia",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"nome\": \"RH\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_hierarquia_listar",
+      "parentId": "fld_hierarquia",
+      "name": "Listar Hierarquias",
+      "url": "{{ base_url }}/hierarquia",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_hierarquia_departamentos",
+      "parentId": "fld_hierarquia",
+      "name": "Departamentos Únicos",
+      "url": "{{ base_url }}/hierarquia/departamentos",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_hierarquia_unidades",
+      "parentId": "fld_hierarquia",
+      "name": "Unidades por Departamento",
+      "url": "{{ base_url }}/hierarquia/unidades/:departamento",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_hierarquia_id",
+      "parentId": "fld_hierarquia",
+      "name": "Buscar Hierarquia por ID",
+      "url": "{{ base_url }}/hierarquia/:id",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_hierarquia_atualizar",
+      "parentId": "fld_hierarquia",
+      "name": "Atualizar Hierarquia",
+      "url": "{{ base_url }}/hierarquia/:id",
+      "method": "PUT",
+      "body": { "mimeType": "application/json", "text": "{\n  \"nome\": \"Novo Nome\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_hierarquia_deletar",
+      "parentId": "fld_hierarquia",
+      "name": "Deletar Hierarquia",
+      "url": "{{ base_url }}/hierarquia/:id",
+      "method": "DELETE",
+      "_type": "request"
+    },
+    
+    {
+      "_id": "fld_ferias",
+      "parentId": "wrk_1",
+      "name": "Gestão de Férias",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_ferias_cadastrar",
+      "parentId": "fld_ferias",
+      "name": "Cadastrar Férias",
+      "url": "{{ base_url }}/ferias",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"id_apdata\": \"123\",\n  \"periodo\": \"2025-08-01 a 2025-08-15\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_ferias_atualizar",
+      "parentId": "fld_ferias",
+      "name": "Atualizar Férias",
+      "url": "{{ base_url }}/ferias/:id_apdata",
+      "method": "PUT",
+      "body": { "mimeType": "application/json", "text": "{\n  \"periodo\": \"2025-09-01 a 2025-09-15\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_ferias_deletar",
+      "parentId": "fld_ferias",
+      "name": "Deletar Férias",
+      "url": "{{ base_url }}/ferias/:id_apdata",
+      "method": "DELETE",
+      "_type": "request"
+    },
+    {
+      "_id": "req_ferias_aprovar",
+      "parentId": "fld_ferias",
+      "name": "Aprovar Férias",
+      "url": "{{ base_url }}/ferias/:id_apdata/aprovar",
+      "method": "POST",
+      "_type": "request"
+    },
+    {
+      "_id": "req_ferias_reprovar",
+      "parentId": "fld_ferias",
+      "name": "Reprovar Férias",
+      "url": "{{ base_url }}/ferias/:id_apdata/reprovar",
+      "method": "POST",
+      "_type": "request"
+    },
+    {
+      "_id": "req_ferias_listar",
+      "parentId": "fld_ferias",
+      "name": "Listar Férias",
+      "url": "{{ base_url }}/ferias",
+      "method": "GET",
+      "_type": "request"
+    },
+    
+    {
+      "_id": "fld_vaga",
+      "parentId": "wrk_1",
+      "name": "Vagas",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_vaga_criar",
+      "parentId": "fld_vaga",
+      "name": "Criar Vaga",
+      "url": "{{ base_url }}/vagas",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"codigo\": \"V123\",\n  \"titulo\": \"Analista\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_lote",
+      "parentId": "fld_vaga",
+      "name": "Criar Vagas em Lote",
+      "url": "{{ base_url }}/vagas/lote",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "[{\n  \"codigo\": \"V124\",\n  \"titulo\": \"Dev\"\n}]" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_listar",
+      "parentId": "fld_vaga",
+      "name": "Listar Vagas",
+      "url": "{{ base_url }}/vagas",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_rel_contratados",
+      "parentId": "fld_vaga",
+      "name": "Relatório Contratados",
+      "url": "{{ base_url }}/vagas/relatorio/contratados",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_rel_periodo",
+      "parentId": "fld_vaga",
+      "name": "Relatório Vagas por Período",
+      "url": "{{ base_url }}/vagas/relatorio/periodo",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_codigo",
+      "parentId": "fld_vaga",
+      "name": "Buscar Vaga por Código",
+      "url": "{{ base_url }}/vagas/:codigo",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_aprovar",
+      "parentId": "fld_vaga",
+      "name": "Aprovar Vaga",
+      "url": "{{ base_url }}/vagas/:codigo/aprovar",
+      "method": "PUT",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_atualizar",
+      "parentId": "fld_vaga",
+      "name": "Atualizar Vaga",
+      "url": "{{ base_url }}/vagas/:codigo_vaga/atualizar",
+      "method": "PUT",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_fase",
+      "parentId": "fld_vaga",
+      "name": "Atualizar Fase da Vaga",
+      "url": "{{ base_url }}/vagas/:codigo_vaga/fase",
+      "method": "PUT",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_rejeitar",
+      "parentId": "fld_vaga",
+      "name": "Rejeitar Vaga",
+      "url": "{{ base_url }}/vagas/:codigo/rejeitar",
+      "method": "PUT",
+      "_type": "request"
+    },
+    {
+      "_id": "req_vaga_inscrever",
+      "parentId": "fld_vaga",
+      "name": "Inscrever Candidato",
+      "url": "{{ base_url }}/vagas/:codigo/inscrever",
+      "method": "POST",
+      "_type": "request"
+    },
+    
+    {
+      "_id": "fld_relatorio",
+      "parentId": "wrk_1",
+      "name": "Relatórios",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_relatorio_enviar_email",
+      "parentId": "fld_relatorio",
+      "name": "Enviar Relatório por Email",
+      "url": "{{ base_url }}/relatorios/enviar-email",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"emails\": [\"dest@empresa.com\"],\n  \"relatorio\": \"Relatório\"\n}" },
+      "_type": "request"
+    },
+    
+    {
+      "_id": "fld_usuario",
+      "parentId": "wrk_1",
+      "name": "Usuário",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_usuario_cadastrar",
+      "parentId": "fld_usuario",
+      "name": "Cadastrar Usuário",
+      "url": "{{ base_url }}/usuario",
+      "method": "POST",
+      "body": { "mimeType": "application/json", "text": "{\n  \"nome\": \"Usuário\",\n  \"email\": \"user@empresa.com\",\n  \"senha\": \"123456\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_usuario_reset_password",
+      "parentId": "fld_usuario",
+      "name": "Resetar Senha",
+      "url": "{{ base_url }}/usuario/reset-password",
+      "method": "PUT",
+      "body": { "mimeType": "application/json", "text": "{\n  \"email\": \"user@empresa.com\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_usuario_aprovadores",
+      "parentId": "fld_usuario",
+      "name": "Buscar Gestor Direto",
+      "url": "{{ base_url }}/usuario/aprovadores",
+      "method": "GET",
+      "_type": "request"
+    },
+    {
+      "_id": "req_usuario_aprovadores_rh",
+      "parentId": "fld_usuario",
+      "name": "Buscar Aprovadores RH",
+      "url": "{{ base_url }}/usuario/aprovadores/rh",
+      "method": "GET",
+      "_type": "request"
+    }
+  ]
+}

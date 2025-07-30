@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import Modal from '@mui/material/Modal';
+import { Box as MuiBox, useTheme } from '@mui/material';
 import {
   Paper,
   Typography,
@@ -10,13 +12,14 @@ import {
   TableRow,
   TableSortLabel,
   Chip,
-  Box,
+  //Box,
   IconButton,
 
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 
+// Exemplo: cada solicitação pode ter um array de colaboradores
 const initialVacancies = [
   {
     tipoRequisicao: "Abertura de Vaga",
@@ -26,6 +29,10 @@ const initialVacancies = [
     dataAbertura: '01 Jun 2025',
     dataAtuacao: '02 Jun 2025',
     quantidade: 2,
+    colaboradores: [
+      { id: 30, nome: 'Antonio', idApData: '30', gestorOrigem: 'Carlos', gestorDestino: 'Ana' },
+      { id: 31, nome: 'Maria', idApData: '31', gestorOrigem: 'Carlos', gestorDestino: 'Ana' },
+    ],
     urgencia: 'Alta',
     tipo: 'CLT',
     motivo: 'Substituição',
@@ -40,6 +47,9 @@ const initialVacancies = [
     dataAbertura: '28 Mai 2025',
     dataAtuacao: '29 Mai 2025',
     quantidade: 0,
+    colaboradores: [
+      { id: 32, nome: 'João', idApData: '32', gestorOrigem: 'Carlos', gestorDestino: 'Ana' },
+    ],
     urgencia: 'Baixo',
     tipo: 'Reset de Senha',
     motivo: 'Aumento de Quadro',
@@ -54,6 +64,7 @@ const initialVacancies = [
     dataAbertura: '28 Mai 2025',
     dataAtuacao: '29 Mai 2025',
     quantidade: 0,
+    colaboradores: [],
     urgencia: 'Baixo',
     tipo: 'Reset de Senha',
     motivo: 'Aumento de Quadro',
@@ -68,6 +79,7 @@ const initialVacancies = [
     dataAbertura: '28 Mai 2025',
     dataAtuacao: '29 Mai 2025',
     quantidade: 0,
+    colaboradores: [],
     urgencia: 'Baixo',
     tipo: 'Alterar Hierarquia',
     motivo: 'Aumento de Quadro',
@@ -82,6 +94,7 @@ const initialVacancies = [
     dataAbertura: '28 Mai 2025',
     dataAtuacao: '29 Mai 2025',
     quantidade: 1,
+    colaboradores: [],
     urgencia: 'Média',
     tipo: 'PJ',
     motivo: 'Aumento de Quadro',
@@ -96,6 +109,7 @@ const initialVacancies = [
     dataAbertura: '20 Mai 2025',
     dataAtuacao: '21 Mai 2025',
     quantidade: 1,
+    colaboradores: [],
     urgencia: 'Baixa',
     tipo: 'Estágio',
     motivo: 'Remanejamento',
@@ -110,6 +124,7 @@ const initialVacancies = [
     dataAbertura: '20 Mai 2025',
     dataAtuacao: '21 Mai 2025',
     quantidade: 1,
+    colaboradores: [],
     urgencia: 'Baixa',
     tipo: 'Estágio',
     motivo: 'Remanejamento',
@@ -124,6 +139,7 @@ const initialVacancies = [
     dataAbertura: '20 Mai 2025',
     dataAtuacao: '21 Mai 2025',
     quantidade: 1,
+    colaboradores: [],
     urgencia: 'Alta',
     tipo: 'CLT',
     motivo: 'Aumento de Quadro',
@@ -140,7 +156,7 @@ const headCells = [
   { id: 'gestor', label: 'Gestor Solicitante', sortable: false },
   { id: 'dataAbertura', label: 'Data de Abertura', sortable: false },
   { id: 'dataAtuacao', label: 'Data de Atuação', sortable: false },
-  { id: 'quantidade', label: 'Qtd. Vagas', sortable: false },
+  { id: 'colaboradores', label: 'Lista de atuação', sortable: false },
   { id: 'urgencia', label: 'Urgência', sortable: true },
   { id: 'tipo', label: 'Tipo', sortable: false },
   { id: 'motivo', label: 'Motivo', sortable: false },
@@ -182,10 +198,13 @@ const UrgenciaChip = ({ value }: { value: string }) => {
   return <Chip label={value} color={color} size="small" />;
 };
 
-const ConsultRequest: React.FC = () => {
+function ConsultRequest() {
   const [vacancies] = useState(initialVacancies);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof typeof initialVacancies[0]>("tipoRequisicao");
+  const [openModal, setOpenModal] = useState(false);
+  const [modalColaboradores, setModalColaboradores] = useState<any[]>([]);
+  const theme = useTheme();
 
   const handleRequestSort = (property: keyof typeof initialVacancies[0]) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -193,17 +212,23 @@ const ConsultRequest: React.FC = () => {
     setOrderBy(property);
   };
 
+  const handleOpenModal = (colaboradores: any[]) => {
+    setModalColaboradores(colaboradores);
+    setOpenModal(true);
+  };
+  const handleCloseModal = () => setOpenModal(false);
+
   return (
-    <Box sx={{ p: 4, minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <div className="app-main" style={{ padding: theme.spacing(4), minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ fontWeight: 700, color: '#1976d2', mb: 4 }}>
         Consulta de Aprovações e Requisições Realizadas
       </Typography>
       {vacancies.length === 0 ? (
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+        <MuiBox sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
           <Typography variant="h6" color="text.secondary" component="h1" gutterBottom align="center" sx={{ fontWeight: 700, color: '#1976d2', mb: 4 }}>
             Você não tem mais pendências de aprovação
           </Typography>
-        </Box>
+        </MuiBox>
       ) : (
         <TableContainer component={Paper} elevation={0}>
           <Table>
@@ -242,7 +267,11 @@ const ConsultRequest: React.FC = () => {
                   <TableCell align="center">{row.gestor}</TableCell>
                   <TableCell align="center">{row.dataAbertura}</TableCell>
                   <TableCell align="center">{row.dataAtuacao}</TableCell>
-                  <TableCell align="center">{row.quantidade}</TableCell>
+                  <TableCell align="center">
+                    <IconButton color="primary" onClick={() => handleOpenModal(row.colaboradores || [])} disabled={!row.colaboradores || row.colaboradores.length === 0}>
+                      <span role="img" aria-label="lista">👥</span>
+                    </IconButton>
+                  </TableCell>
                   <TableCell align="center">
                     <UrgenciaChip value={row.urgencia} />
                   </TableCell>
@@ -287,8 +316,49 @@ const ConsultRequest: React.FC = () => {
           </Table>
         </TableContainer>
       )}
-    </Box>
+      {/* Modal de colaboradores */}
+      <Modal open={openModal} onClose={handleCloseModal}>
+        <MuiBox sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          bgcolor: 'background.paper',
+          boxShadow: 24,
+          p: 4,
+          borderRadius: 2,
+          minWidth: 320,
+          maxWidth: 500,
+        }}>
+          <Typography variant="h6" gutterBottom>Lista de Colaboradores do Chamado</Typography>
+          {modalColaboradores.length === 0 ? (
+            <Typography>Nenhum colaborador vinculado.</Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nome</TableCell>
+                  <TableCell>IdApData</TableCell>
+                  <TableCell>Gestor Origem</TableCell>
+                  <TableCell>Gestor Destino</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {modalColaboradores.map((col, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{col.nome}</TableCell>
+                    <TableCell>{col.idApData || col.id}</TableCell>
+                    <TableCell>{col.gestorOrigem}</TableCell>
+                    <TableCell>{col.gestorDestino}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </MuiBox>
+      </Modal>
+    </div>
   );
-};
+}
 
 export default ConsultRequest;
